@@ -112,11 +112,14 @@
   <ItemGroup>
     <Content Include="Python\agent.py" />
     <Content Include="Python\agent_app.py" />
+    <Content Include="Python\collect_activation_results.py" />
     <Content Include="Python\compare.py" />
     <Content Include="Python\create_device_env.py" />
+    <Content Include="Python\create_device_folders.py" />
     <Content Include="Python\logger.py" />
     <Content Include="Python\record.py" />
     <Content Include="Python\sql.py" />
+    <Content Include="Python\start_devices.py" />
     <Content Include="Python\utils.py" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -43,7 +43,7 @@ namespace Console
                 return true;
             }
             catch (Exception ex) {
-                _logger.WriteLog($"Error: {ex.Message} {ex.StackTrace}", "error");
+                _logger.WriteLog($"Error in init: {ex.Message} {ex.StackTrace}", "error");
                 return false;
             }
         }
@@ -69,14 +69,14 @@ namespace Console
             }
             catch (Exception ex)
             {
-                _logger.WriteLog($"Error: {ex.Message} {ex.StackTrace}", "error");
+                _logger.WriteLog($"Error in sendDevices: {ex.Message} {ex.StackTrace}", "error");
                 return false;
             }
         }
     
 
         /// <summary>
-        /// Get script from test center, run device servers and clients and finally send activation results
+        /// Get script from test center, run device servers and clients and finally send activation and compare events results
         /// </summary>
         /// <param name="jsonContent">json containing script file</param>
         public bool SendScript(string jsonContent)
@@ -92,17 +92,38 @@ namespace Console
                 Thread.Sleep(int.Parse(Settings.Get("PROCESS_UPTIME_IN_MS")));
                 _getProcessTimer.Elapsed += GetProcessTimer_Elapsed;
                 _getProcessTimer.Start();
-            return true;
+                return true;
             }
             catch (Exception ex)
             {
-                _logger.WriteLog($"Error: {ex.Message} {ex.StackTrace}", "error");
+                _logger.WriteLog($"Error in sendScript: {ex.Message} {ex.StackTrace}", "error");
                 return false;
             }
         }
 
         /// <summary>
-        /// Stop all device clients and servers processes
+        /// Collect activate results from all devices
+        /// </summary>
+        private void CollectActivationResults()
+        {
+            try
+            {
+                Utils.LoadConfig();
+                _logger = new Logger(Settings.Get("LOG_FILE_PATH"));
+                string devicesJsonFile = Settings.Get("DEVICES_TO_CREATE_PATH");
+                string deviceFoldersDir = Settings.Get("DEVICE_FOLDERS_DIR");
+                string activationResultsFile = Settings.Get("ACTIVATION_RESULTS_PATH");
+                int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "collect_activation_results.py", $"{devicesJsonFile} {deviceFoldersDir} {activationResultsFile}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
+                // read activate_results.json to json object and send to test center
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteLog($"Error in collectActivationResults: {ex.Message} {ex.StackTrace}", "error");
+            }
+        }
+
+        /// <summary>
+        /// Stop all device clients and servers processes and compare events
         /// </summary>
         /// <param name="sender">sender</param>
         /// <param name="e">event</param>
@@ -113,7 +134,11 @@ namespace Console
             {
                 Utils.KillProcessAndChildren(processObj.Pid);
             }
-            // todo: collect client logs and send test center activation script results via POST request
+            // todo: Collect client logs and create activation_results json object in the format: <ga>,<sn>,<activation_status>
+            // todo: Send to test center POST request getScriptResults with activation_results json
+            // todo: Initiate compare events
+            // todo: Collect compare results and create compare_events_results json object in the format: <ga>,<sn>,<event_key>,<event_value>,<creation_time>
+            // todo: Send to test center POST request GetComparisonResults with compare_events_results json
         }
     }
 }
