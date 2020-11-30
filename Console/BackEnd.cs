@@ -28,11 +28,13 @@ namespace Console
             try
             {
                 Utils.LoadConfig();
+                _logger = new Logger(Settings.Get("LOG_FILE_PATH"));
+
                 string internalIP = Utils.GetInternalIPAddress();
+                _logger.WriteLog($"Agent internal IP: {internalIP}", "info");
                 string agentUrl = internalIP + ":" + Settings.Get("AGENT_PORT");
                 Settings.Set("AGENT_URL", agentUrl);
-                _logger = new Logger(Settings.Get("LOG_FILE_PATH"));
-                _logger.WriteLog("Create agent folder", "info");
+                _logger.WriteLog($"Create agent folder for {agentUrl}", "info");
                 Directory.CreateDirectory(Settings.Get("AGENT_DIR_PATH"));
                 string cwd = Directory.GetCurrentDirectory();
                 string testCenterUrl = Settings.Get("TEST_CENTER_URL");
@@ -55,6 +57,7 @@ namespace Console
             try {
                 Utils.LoadConfig();
                 _logger = new Logger(Settings.Get("LOG_FILE_PATH"));
+
                 _logger.WriteLog("Received device list", "info");
                 List<Device> devicesToCreate = JsonConvert.DeserializeObject<List<Device>>(jsonContent);
                 Utils.WriteDeviceListToFile(devicesToCreate, Settings.Get("DEVICES_TO_CREATE_PATH"));
@@ -87,7 +90,7 @@ namespace Console
                 int maxDevicesToCreate = int.Parse(Settings.Get("MAX_DEVICES_TO_CREATE"));
                 int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "start_devices.py", $"{Settings.Get("DEVICES_TO_CREATE_PATH")} {Settings.Get("SCRIPT_PATH")} {maxDevicesToCreate} {Settings.Get("PROCESSES_PATH")}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
                 Thread.Sleep(int.Parse(Settings.Get("PROCESS_UPTIME_IN_MS")));
-                _getProcessTimer.Elapsed += _getProcessTimer_Elapsed;
+                _getProcessTimer.Elapsed += GetProcessTimer_Elapsed;
                 _getProcessTimer.Start();
             return true;
             }
@@ -103,7 +106,7 @@ namespace Console
         /// </summary>
         /// <param name="sender">sender</param>
         /// <param name="e">event</param>
-        private void _getProcessTimer_Elapsed(object sender, ElapsedEventArgs e)
+        private void GetProcessTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             List<LumXProcess> processList = Utils.ReadProcessesFromFile(Settings.Get("PROCESSES_PATH"));
             foreach (var processObj in processList)
