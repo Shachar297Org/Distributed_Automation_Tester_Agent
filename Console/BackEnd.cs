@@ -25,11 +25,10 @@ namespace Console
         /// </summary>
         public bool Init()
         {
+            Utils.LoadConfig();
+            _logger = new Logger(Settings.Get("LOG_FILE_PATH"));
             try
             {
-                Utils.LoadConfig();
-                _logger = new Logger(Settings.Get("LOG_FILE_PATH"));
-
                 string internalIP = Utils.GetInternalIPAddress();
                 _logger.WriteLog($"Agent internal IP: {internalIP}", "info");
                 string agentUrl = internalIP + ":" + Settings.Get("AGENT_PORT");
@@ -54,11 +53,12 @@ namespace Console
         /// <param name="jsonContent">json containing device list</param>
         public bool SendDevices(string jsonContent)
         {
-            try {
-                Utils.LoadConfig();
-                _logger = new Logger(Settings.Get("LOG_FILE_PATH"));
+            Utils.LoadConfig();
+            _logger = new Logger(Settings.Get("LOG_FILE_PATH"));
 
-                _logger.WriteLog("Received device list", "info");
+            _logger.WriteLog("Received device list", "info");
+            try {
+                _logger.WriteLog($"Json content: {jsonContent}", "info");
                 List<Device> devicesToCreate = JsonConvert.DeserializeObject<List<Device>>(jsonContent);
                 Utils.WriteDeviceListToFile(devicesToCreate, Settings.Get("DEVICES_TO_CREATE_PATH"));
                 _logger.WriteLog("Start creating device folders", "info");
@@ -81,10 +81,10 @@ namespace Console
         /// <param name="jsonContent">json containing script file</param>
         public bool SendScript(string jsonContent)
         {
+            Utils.LoadConfig();
+            _logger = new Logger(Settings.Get("LOG_FILE_PATH"));
             try
             {
-                Utils.LoadConfig();
-                _logger = new Logger(Settings.Get("LOG_FILE_PATH"));
                 ScriptFile scriptFileObj = JsonConvert.DeserializeObject<ScriptFile>(jsonContent);
                 Utils.WriteToFile(Settings.Get("SCRIPT_PATH"), scriptFileObj.Content, false);
                 int maxDevicesToCreate = int.Parse(Settings.Get("MAX_DEVICES_TO_CREATE"));
@@ -106,10 +106,10 @@ namespace Console
         /// </summary>
         private void CollectActivationResults()
         {
+            Utils.LoadConfig();
+            _logger = new Logger(Settings.Get("LOG_FILE_PATH"));
             try
             {
-                Utils.LoadConfig();
-                _logger = new Logger(Settings.Get("LOG_FILE_PATH"));
                 string devicesJsonFile = Settings.Get("DEVICES_TO_CREATE_PATH");
                 string deviceFoldersDir = Settings.Get("DEVICE_FOLDERS_DIR");
                 string activationResultsFile = Settings.Get("ACTIVATION_RESULTS_PATH");

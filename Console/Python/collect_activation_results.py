@@ -28,28 +28,39 @@ def CollectActivationResults(devicesRecords: list, devicesFoldersDir: str, logge
 
 
 if __name__ == "__main__":
-    devicesJsonFile = sys.argv[1]
-    devicesFoldersDir = sys.argv[2]
-    activationResultsFile = sys.argv[3]
+    print('-----collect_activation_results-----')
+    print('Arguments: {}'.format(sys.argv))
 
-    configParser = LoadConfig()
-    logger = InitLogger(configParser)
+    try:
+        devicesJsonFile = sys.argv[1]
+        devicesFoldersDir = sys.argv[2]
+        activationResultsFile = sys.argv[3]
 
-    if (not os.path.exists(devicesJsonFile)):
-        logger.WriteLog('No such file {}'.format(
-            devicesJsonFile), 'error')
-        exit(2)
+        configParser = LoadConfig()
+        logger = InitLogger(configParser)
 
-    if (not os.path.exists(devicesJsonFile)):
-        logger.WriteLog('No such folder {}'.format(
-            devicesFoldersDir), 'error')
-        exit(2)
+        if (not os.path.exists(devicesJsonFile)):
+            logger.WriteLog('No such file {}'.format(
+                devicesJsonFile), 'error')
+            exit(2)
 
-    content = ReadFileContent(devicesJsonFile)
-    devicesRecords = json.loads(content)
+        if (not os.path.exists(devicesJsonFile)):
+            logger.WriteLog('No such folder {}'.format(
+                devicesFoldersDir), 'error')
+            exit(2)
 
-    activationResults = CollectActivationResults(
-        devicesRecords, devicesFoldersDir, logger)
+        content = ReadFileContent(devicesJsonFile)
+        devicesRecords = json.loads(content)
 
-    with open(activationResultsFile, 'w') as fp:
-        json.dump(activationResults, fp)
+        activationResults = CollectActivationResults(
+            devicesRecords, devicesFoldersDir, logger)
+
+        with open(activationResultsFile, 'w') as fp:
+            json.dump(activationResults, fp)
+
+        print('-----success-----')
+
+    except Exception as ex:
+        print('Error: {}'.format(ex))
+        print('-----fail-----')
+        exit(1)

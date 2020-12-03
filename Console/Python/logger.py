@@ -22,6 +22,7 @@ class Logger:
         logging.warning(msg)
 
     def WriteLog(self, msg, level):
+        print('[{}]: {}'.format(level.upper(), msg))
         if level == 'debug':
             self.WriteDebug(msg)
         elif level == 'info':

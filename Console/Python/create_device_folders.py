@@ -41,24 +41,30 @@ def CreateDeviceFolders(devicesToCreateRecords: list, maxDevicesToCreate: int, c
 
 
 if __name__ == "__main__":
-    # try:
-    devicesToCreateFile = sys.argv[1]
+    print('-----create_device_folders-----')
+    print('Arguments: {}'.format(sys.argv))
 
-    configParser = LoadConfig()
-    logger = InitLogger(configParser)
+    try:
+        devicesToCreateFile = sys.argv[1]
 
-    if (not os.path.exists(devicesToCreateFile)):
-        logger.WriteLog('No such file {}'.format(
-            devicesToCreateFile), 'error')
-        exit(2)
+        configParser = LoadConfig()
+        logger = InitLogger(configParser)
 
-    maxDevicesToCreate = int(sys.argv[2])
+        if (not os.path.exists(devicesToCreateFile)):
+            logger.WriteLog('No such file {}'.format(
+                devicesToCreateFile), 'error')
+            exit(2)
 
-    content = ReadFileContent(devicesToCreateFile)
-    devicesToCreateRecords = json.loads(content)
+        maxDevicesToCreate = int(sys.argv[2])
 
-    CreateDeviceFolders(devicesToCreateRecords,
-                        maxDevicesToCreate, configParser, logger)
+        content = ReadFileContent(devicesToCreateFile)
+        devicesToCreateRecords = json.loads(content)
 
-    # except Exception as ex:
-    #     logger.WriteLog(ex, 'error')
+        CreateDeviceFolders(devicesToCreateRecords,
+                            maxDevicesToCreate, configParser, logger)
+        print('-----success-----')
+
+    except Exception as ex:
+        print('Error: {}'.format(ex))
+        print('-----fail-----')
+        exit(1)

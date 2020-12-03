@@ -43,7 +43,7 @@ namespace Console.Utilities
                     string output = reader.ReadToEnd();
                     if (outputFile != null)
                     {
-                        using (StreamWriter writer = new StreamWriter(outputFile))
+                        using (StreamWriter writer = new StreamWriter(outputFile, append: true))
                         {
                             writer.Write(output);
                         }

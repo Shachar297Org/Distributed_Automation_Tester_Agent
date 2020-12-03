@@ -126,46 +126,53 @@ def StartAllClients(devicesToCreate, scriptFilePath, configParser, logger, clien
 
 
 if __name__ == "__main__":
-    # try:
-    deviceToCreateFile = sys.argv[1]
-    scriptFilePath = sys.argv[2]
-    maxDevicesToStart = int(sys.argv[3])
-    processesPath = sys.argv[4]
+    print('-----start_devices-----')
+    print('Arguments: {}'.format(sys.argv))
 
-    configParser = LoadConfig()
-    logger = InitLogger(configParser)
+    try:
+        deviceToCreateFile = sys.argv[1]
+        scriptFilePath = sys.argv[2]
+        maxDevicesToStart = int(sys.argv[3])
+        processesPath = sys.argv[4]
 
-    if (not os.path.exists(deviceToCreateFile)):
-        logger.WriteLog('No such folder {}'.format(
-            deviceToCreateFile), 'error')
-        exit(2)
+        configParser = LoadConfig()
+        logger = InitLogger(configParser)
 
-    if (not os.path.exists(scriptFilePath)):
-        logger.WriteLog('No such file {}'.format(scriptFilePath), 'error')
-        exit(2)
+        if (not os.path.exists(deviceToCreateFile)):
+            logger.WriteLog('No such folder {}'.format(
+                deviceToCreateFile), 'error')
+            exit(2)
 
-    jsonContent = ReadFileContent(deviceToCreateFile)
-    devicesToCreate = json.loads(jsonContent)[:maxDevicesToStart]
+        if (not os.path.exists(scriptFilePath)):
+            logger.WriteLog('No such file {}'.format(scriptFilePath), 'error')
+            exit(2)
 
-    CopyScriptFileToDeviceFolders(
-        devicesToCreate, scriptFilePath, configParser, logger)
+        jsonContent = ReadFileContent(deviceToCreateFile)
+        devicesToCreate = json.loads(jsonContent)[:maxDevicesToStart]
 
-    logger.WriteLog(
-        'Modify GA and SN in activation script of devices.', 'info')
-    ModifyActivationScripts(
-        devicesToCreate, scriptFilePath, configParser, logger)
+        CopyScriptFileToDeviceFolders(
+            devicesToCreate, scriptFilePath, configParser, logger)
 
-    logger.WriteLog('Start devices (servers and clients)', 'info')
-    servers = []
-    clients = []
-    StartAllServers(devicesToCreate, configParser, logger, servers)
-    StartAllClients(devicesToCreate, scriptFilePath,
-                    configParser, logger, clients)
+        logger.WriteLog(
+            'Modify GA and SN in activation script of devices.', 'info')
+        ModifyActivationScripts(
+            devicesToCreate, scriptFilePath, configParser, logger)
 
-    logger.WriteLog('Write server and client processes to json file', 'info')
-    processes = servers + clients
-    jsonString = json.dumps(processes)
-    WriteToTextFile(processesPath, jsonString)
+        logger.WriteLog('Start devices (servers and clients)', 'info')
+        servers = []
+        clients = []
+        StartAllServers(devicesToCreate, configParser, logger, servers)
+        StartAllClients(devicesToCreate, scriptFilePath,
+                        configParser, logger, clients)
 
-    # except Exception as ex:
-    #     print(ex)
+        logger.WriteLog(
+            'Write server and client processes to json file', 'info')
+        processes = servers + clients
+        jsonString = json.dumps(processes)
+        WriteToTextFile(processesPath, jsonString)
+        print('-----success-----')
+
+    except Exception as ex:
+        print('Error: {}'.format(ex))
+        print('-----fail-----')
+        exit(1)
