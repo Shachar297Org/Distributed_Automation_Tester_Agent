@@ -130,10 +130,10 @@ def CreateDeviceFolder(device: dict, configParser: object):
     # copyfile(activationScriptFilePath, destScriptPath)
 
     UpdateXmlConfigFile(os.path.join(deviceFolder, 'LumXActivator',
-                                     'LumXActivator.exe.config'), 'LogFilesLocation', logsFolder)
+                                     'Activator.exe.config'), 'LogFilesLocation', logsFolder)
 
     UpdateXmlConfigFile(os.path.join(deviceFolder, 'LumXActivator',
-                                     'LumXActivator.exe.config'), 'CertificationFolderLocation', certFolder)
+                                     'Activator.exe.config'), 'CertificationFolderLocation', certFolder)
 
     UpdateXmlConfigFile(os.path.join(deviceFolder, 'LumXActivator',
-                                     'LumXActivator.exe.config'), 'OpenSslExePath', opensslPath)
+                                     'Activator.exe.config'), 'OpenSslExePath', opensslPath)

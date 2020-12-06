@@ -64,6 +64,7 @@ namespace Console
                 _logger.WriteLog("Start creating device folders", "info");
                 int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "create_device_folders.py", $"{Settings.Get("DEVICES_TO_CREATE_PATH")} {int.Parse(Settings.Get("MAX_DEVICES_TO_CREATE"))}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
                 string cwd = Directory.GetCurrentDirectory();
+                _logger.WriteLog($"Send agentReady to test center in {Settings.Get("TEST_CENTER_URL")}", "info");
                 Utils.RunCommand("curl", Settings.Get("TEST_CENTER_URL") + $"/agentReady?port={Settings.Get("AGENT_PORT")}", "", cwd, null);
                 return true;
             }

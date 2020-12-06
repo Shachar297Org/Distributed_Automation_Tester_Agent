@@ -34,6 +34,8 @@ namespace Console.Utilities
             start.WorkingDirectory = cwd;
             start.UseShellExecute = false;
             start.RedirectStandardOutput = true;
+            start.RedirectStandardError = true;
+
             int returnCode = 0;
             using (Process process = Process.Start(start))
             {
@@ -47,6 +49,14 @@ namespace Console.Utilities
                         {
                             writer.Write(output);
                         }
+                    }
+                }
+                using (StreamReader reader = process.StandardError)
+                {
+                    string output = reader.ReadToEnd();
+                    using (StreamWriter writer = new StreamWriter(outputFile, append: true))
+                    {
+                        writer.Write(output);
                     }
                 }
                 returnCode = process.ExitCode;
