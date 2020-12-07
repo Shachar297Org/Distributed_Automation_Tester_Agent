@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
+using System.Text;
 using System.Web.Http.Results;
 
 namespace LumXAgent.Controllers
@@ -57,6 +58,22 @@ namespace LumXAgent.Controllers
             HttpContent requestContent = Request.Content;
             string scriptContent = requestContent.ReadAsStringAsync().Result;
             backEnd.SendScript(scriptContent);
+        }
+
+        [HttpGet]
+        [Route("testcmd")]
+        public HttpResponseMessage TestCommand(string num)
+        {
+            Utils.LoadConfig();
+            string pythonPath = Settings.Get("PYTHON");
+            string pythonScriptsPath = Settings.Get("PYTHON_SCRIPTS_PATH");
+            //int returnCode = Utils.RunCommand(@"pythonScript.py", "", num, @"D:\Temp",@"D:\test_center\out.txt");
+            int returnCode = Utils.RunCommand(pythonPath, "pythonScript.py", num, pythonScriptsPath, @"D:\test_center\out.txt");
+            var output = Utils.ReadFileContent(@"D:\test_center\out.txt");
+            var response = Request.CreateResponse(HttpStatusCode.OK);
+            var jsonText = "{returnCode:" + returnCode + ", " + "output:" + output + "}";
+            response.Content = new StringContent(jsonText, Encoding.UTF8, "application/json");
+            return response;
         }
     }
 }

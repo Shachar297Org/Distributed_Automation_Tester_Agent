@@ -38,7 +38,7 @@ namespace Console
                 string cwd = Directory.GetCurrentDirectory();
                 string testCenterUrl = Settings.Get("TEST_CENTER_URL");
                 _logger.WriteLog($"Send connect to test center in {testCenterUrl}", "info");
-                Utils.RunCommand("curl", testCenterUrl + $"/connect?port={Settings.Get("AGENT_PORT")}", "", cwd, null);
+                Utils.RunCommand("curl", testCenterUrl + $"/connect?port={Settings.Get("AGENT_PORT")}", "", cwd, Settings.Get("OUTPUT"));
                 return true;
             }
             catch (Exception ex) {
@@ -62,10 +62,10 @@ namespace Console
                 List<Device> devicesToCreate = JsonConvert.DeserializeObject<List<Device>>(jsonContent);
                 Utils.WriteDeviceListToFile(devicesToCreate, Settings.Get("DEVICES_TO_CREATE_PATH"));
                 _logger.WriteLog("Start creating device folders", "info");
-                int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "create_device_folders.py", $"{Settings.Get("DEVICES_TO_CREATE_PATH")} {int.Parse(Settings.Get("MAX_DEVICES_TO_CREATE"))}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
+                int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "create_device_folders.py", $"{Settings.Get("CONFIG_FILE")}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
                 string cwd = Directory.GetCurrentDirectory();
                 _logger.WriteLog($"Send agentReady to test center in {Settings.Get("TEST_CENTER_URL")}", "info");
-                Utils.RunCommand("curl", Settings.Get("TEST_CENTER_URL") + $"/agentReady?port={Settings.Get("AGENT_PORT")}", "", cwd, null);
+                Utils.RunCommand("curl", Settings.Get("TEST_CENTER_URL") + $"/agentReady?port={Settings.Get("AGENT_PORT")}", "", cwd, Settings.Get("OUTPUT"));
                 return true;
             }
             catch (Exception ex)
@@ -89,7 +89,7 @@ namespace Console
                 ScriptFile scriptFileObj = JsonConvert.DeserializeObject<ScriptFile>(jsonContent);
                 Utils.WriteToFile(Settings.Get("SCRIPT_PATH"), scriptFileObj.Content, false);
                 int maxDevicesToCreate = int.Parse(Settings.Get("MAX_DEVICES_TO_CREATE"));
-                int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "start_devices.py", $"{Settings.Get("DEVICES_TO_CREATE_PATH")} {Settings.Get("SCRIPT_PATH")} {maxDevicesToCreate} {Settings.Get("PROCESSES_PATH")}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
+                int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "start_devices.py", $"{Settings.Get("CONFIG_FILE")}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
                 Thread.Sleep(int.Parse(Settings.Get("PROCESS_UPTIME_IN_MS")));
                 _getProcessTimer.Elapsed += GetProcessTimer_Elapsed;
                 _getProcessTimer.Start();

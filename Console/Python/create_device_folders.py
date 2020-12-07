@@ -2,12 +2,12 @@ import os
 import sys
 import json
 import time
+import traceback
 from utils import *
 from create_device_env import *
-from logger import *
 
 
-def CreateDeviceFolders(devicesToCreateRecords: list, maxDevicesToCreate: int, configParser: object, logger: object):
+def CreateDeviceFolders(devicesToCreateRecords: list, maxDevicesToCreate: int, config: object):
     """
     Create device folders
     """
@@ -20,23 +20,22 @@ def CreateDeviceFolders(devicesToCreateRecords: list, maxDevicesToCreate: int, c
             {'deviceName': '_'.join([sn, gn]), 'DeviceType': gn, 'DeviceSerialNumber': sn})
 
     # Create device folders base dir
-    deviceFoldersBaseDir = configParser.get('Env', 'prefix')
+    deviceFoldersBaseDir = config['DEVICE_FOLDERS_DIR']
     if not os.path.exists(deviceFoldersBaseDir):
         os.makedirs(deviceFoldersBaseDir)
 
-    logger.WriteLog('Devices to create: {}/{}'.format(len(deviceRecords),
-                                                      len(devicesToCreateRecords)), 'info')
+    print('Devices to create: {}/{}'.format(len(deviceRecords),
+                                            len(devicesToCreateRecords)))
     for deviceRecord in deviceRecords:
         try:
-            logger.WriteLog('Creating env folder for {} ...'.format(
-                deviceRecord), 'info')
-            CreateDeviceFolder(deviceRecord, configParser)
+            print('Creating env folder for {} ...'.format(deviceRecord))
+            CreateDeviceFolder(deviceRecord, config)
             time.sleep(2)
-        except OSError as ex:
-            logger.WriteLog(ex, 'error')
+        except Exception as ex:
+            print('Error: {} {}'.format(ex, print))
+            traceback.print_exc()
             return False
-        logger.WriteLog('Device env {} was created successfully.'.format(
-            deviceRecord), 'info')
+        print('Device env {} was created successfully.'.format(deviceRecord))
     return True
 
 
@@ -45,23 +44,21 @@ if __name__ == "__main__":
     print('Arguments: {}'.format(sys.argv))
 
     try:
-        devicesToCreateFile = sys.argv[1]
+        configFile = sys.argv[1]
 
-        configParser = LoadConfig()
-        logger = InitLogger(configParser)
-
-        if (not os.path.exists(devicesToCreateFile)):
-            logger.WriteLog('No such file {}'.format(
-                devicesToCreateFile), 'error')
+        if (not os.path.exists(configFile)):
+            print('Error: No such config file {}'.format(configFile))
             exit(2)
 
-        maxDevicesToCreate = int(sys.argv[2])
+        config = LoadConfigText(configFile)
+
+        devicesToCreateFile = config['DEVICES_TO_CREATE_PATH']
+        maxDevicesToCreate = int(config['MAX_DEVICES_TO_CREATE'])
 
         content = ReadFileContent(devicesToCreateFile)
         devicesToCreateRecords = json.loads(content)
 
-        CreateDeviceFolders(devicesToCreateRecords,
-                            maxDevicesToCreate, configParser, logger)
+        CreateDeviceFolders(devicesToCreateRecords, maxDevicesToCreate, config)
         print('-----success-----')
 
     except Exception as ex:

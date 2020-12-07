@@ -25,11 +25,11 @@ def CopyDirectory(src: str, dest: str):
         print('Directory not copied. Error {}'.format(ex))
 
 
-def ReadDevicesCsv(csvFile: str, configParser: object):
+def ReadDevicesCsv(csvFile: str, config: object):
     """
     Read devices from csv file
     """
-    prefix = configParser.get('Env', 'prefix')
+    prefix = config['DEVICE_FOLDERS_DIR']
 
     clients = []
     with open(csvFile, 'r') as reader:
@@ -76,22 +76,21 @@ def UpdateXmlConfigFile(xmlFile: str, attributeKey: str, attributeValue: str):
     tree.write(xmlFile, encoding='utf-8', method='xml')
 
 
-def CreateDeviceFolder(device: dict, configParser: object):
+def CreateDeviceFolder(device: dict, config: object):
     """
     Create device folder
     """
-    clientApp = configParser.get('Paths', 'clientApp')
-    serverApp = configParser.get('Paths', 'serverApp')
-    activationApp = configParser.get('Paths', 'activationApp')
-    opensslPath = configParser.get('Paths', 'openssl')
-    activationScriptFilePath = configParser.get(
-        'Scripts', 'activationScriptFilePath')
+    clientApp = config['CLIENT_PATH']
+    serverApp = config['SERVER_PATH']
+    activationApp = config['ACTIVATOR_PATH']
+    opensslPath = config['OPENSSL_PATH']
+    activationScriptFilePath = config['SCRIPT_PATH']
 
     deviceName = device['deviceName']
     deviceType = device['DeviceType']
     serialNumber = device['DeviceSerialNumber']
 
-    prefix = configParser.get('Env', 'prefix')
+    prefix = config['DEVICE_FOLDERS_DIR']
     deviceFolder = os.path.join(prefix, deviceName)
 
     # Create client folder
@@ -119,7 +118,7 @@ def CreateDeviceFolder(device: dict, configParser: object):
 
     # Create acivator folder
     # if not os.path.exists(os.path.join(deviceFolder, 'LumXActivator')):
-    CopyDirectory(activationApp, os.path.join(deviceFolder, 'LumXActivator'))
+    # CopyDirectory(activationApp, os.path.join(deviceFolder, 'LumXActivator'))
 
     # Create scripts folder
     if not os.path.exists(os.path.join(deviceFolder, 'Scripts')):
@@ -129,11 +128,11 @@ def CreateDeviceFolder(device: dict, configParser: object):
         # deviceFolder, 'Scripts', 'activationScript.txt')
     # copyfile(activationScriptFilePath, destScriptPath)
 
-    UpdateXmlConfigFile(os.path.join(deviceFolder, 'LumXActivator',
-                                     'Activator.exe.config'), 'LogFilesLocation', logsFolder)
+    # UpdateXmlConfigFile(os.path.join(deviceFolder, 'LumXActivator',
+    #                                 'Activator.exe.config'), 'LogFilesLocation', logsFolder)
 
-    UpdateXmlConfigFile(os.path.join(deviceFolder, 'LumXActivator',
-                                     'Activator.exe.config'), 'CertificationFolderLocation', certFolder)
+    # UpdateXmlConfigFile(os.path.join(deviceFolder, 'LumXActivator',
+    #                                 'Activator.exe.config'), 'CertificationFolderLocation', certFolder)
 
-    UpdateXmlConfigFile(os.path.join(deviceFolder, 'LumXActivator',
-                                     'Activator.exe.config'), 'OpenSslExePath', opensslPath)
+    # UpdateXmlConfigFile(os.path.join(deviceFolder, 'LumXActivator',
+    #                                 'Activator.exe.config'), 'OpenSslExePath', opensslPath)
