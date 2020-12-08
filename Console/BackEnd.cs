@@ -103,7 +103,7 @@ namespace Console
         }
 
         /// <summary>
-        /// Collect activate results from all devices
+        /// Collect activation results from all devices
         /// </summary>
         private void CollectActivationResults()
         {
@@ -111,15 +111,26 @@ namespace Console
             _logger = new Logger(Settings.Get("LOG_FILE_PATH"));
             try
             {
-                string devicesJsonFile = Settings.Get("DEVICES_TO_CREATE_PATH");
-                string deviceFoldersDir = Settings.Get("DEVICE_FOLDERS_DIR");
-                string activationResultsFile = Settings.Get("ACTIVATION_RESULTS_PATH");
-                int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "collect_activation_results.py", $"{devicesJsonFile} {deviceFoldersDir} {activationResultsFile}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
-                // read activate_results.json to json object and send to test center
+                int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "collect_activation_results.py", $"{Settings.Get("CONFIG_FILE")}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
             }
             catch (Exception ex)
             {
                 _logger.WriteLog($"Error in collectActivationResults: {ex.Message} {ex.StackTrace}", "error");
+            }
+        }
+
+        /// <summary>
+        /// Send activation results to test center
+        /// </summary>
+        private void SendActivationResults()
+        {
+            try
+            {
+                int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "send_activation_results.py", $"{Settings.Get("CONFIG_FILE")}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
+            }
+            catch (Exception ex)
+            {
+                _logger.WriteLog($"Error in sendActivationResults: {ex.Message} {ex.StackTrace}", "error");
             }
         }
 
@@ -134,11 +145,19 @@ namespace Console
             foreach (var processObj in processList)
             {
                 Utils.KillProcessAndChildren(processObj.Pid);
+                _logger.WriteLog($"Process with PID {processObj.Pid} was terminated.", "info");
             }
-            // todo: Collect client logs and create activation_results json object in the format: <ga>,<sn>,<activation_status>
+
+            // Collect client logs and create activation_results json object in the format: <ga>,<sn>,<activation_status>
+            CollectActivationResults();
+
             // todo: Send to test center POST request getScriptResults with activation_results json
+            SendActivationResults();
+
             // todo: Initiate compare events
+
             // todo: Collect compare results and create compare_events_results json object in the format: <ga>,<sn>,<event_key>,<event_value>,<creation_time>
+
             // todo: Send to test center POST request GetComparisonResults with compare_events_results json
         }
     }

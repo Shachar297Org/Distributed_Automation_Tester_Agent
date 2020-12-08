@@ -3,10 +3,9 @@ import sys
 import json
 import time
 from utils import *
-from logger import *
 
 
-def CollectActivationResults(devicesRecords: list, devicesFoldersDir: str, logger: object):
+def CollectActivationResults(devicesRecords: list, devicesFoldersDir: str):
     activationResults = []
     for deviceRecord in devicesRecords:
         sn = deviceRecord['DeviceSerialNumber']
@@ -15,7 +14,7 @@ def CollectActivationResults(devicesRecords: list, devicesFoldersDir: str, logge
         deviceFolderPath = os.path.join(devicesFoldersDir, deviceName)
         logFilePath = os.path.join(
             deviceFolderPath, 'Client', 'Debug_x64', 'Logs', 'log.txt')
-        logger.WriteLog('Read logs from file {}'.format(logFilePath), 'info')
+        print('Read logs from file {}'.format(logFilePath))
         isActivated = 'True'
         if not os.path.exists(logFilePath):
             isActivated = 'False'
@@ -32,28 +31,31 @@ if __name__ == "__main__":
     print('Arguments: {}'.format(sys.argv))
 
     try:
-        devicesJsonFile = sys.argv[1]
-        devicesFoldersDir = sys.argv[2]
-        activationResultsFile = sys.argv[3]
+        configFile = sys.argv[1]
 
-        configParser = LoadConfig()
-        logger = InitLogger(configParser)
-
-        if (not os.path.exists(devicesJsonFile)):
-            logger.WriteLog('No such file {}'.format(
-                devicesJsonFile), 'error')
+        if (not os.path.exists(configFile)):
+            print('No such config file {}'.format(configFile))
             exit(2)
 
+        config = LoadConfigText(configFile)
+
+        devicesJsonFile = config['DEVICES_TO_CREATE_PATH']
+        devicesFoldersDir = config['DEVICE_FOLDERS_DIR']
+        activationResultsFile = config['ACTIVATION_RESULTS_PATH']
+
         if (not os.path.exists(devicesJsonFile)):
-            logger.WriteLog('No such folder {}'.format(
-                devicesFoldersDir), 'error')
+            print('No such file {}'.format(devicesJsonFile))
+            exit(2)
+
+        if (not os.path.exists(devicesFoldersDir)):
+            print('No such folder {}'.format(devicesFoldersDir))
             exit(2)
 
         content = ReadFileContent(devicesJsonFile)
         devicesRecords = json.loads(content)
 
         activationResults = CollectActivationResults(
-            devicesRecords, devicesFoldersDir, logger)
+            devicesRecords, devicesFoldersDir)
 
         with open(activationResultsFile, 'w') as fp:
             json.dump(activationResults, fp)

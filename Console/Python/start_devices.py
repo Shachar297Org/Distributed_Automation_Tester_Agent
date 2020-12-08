@@ -92,7 +92,7 @@ def StartClient(deviceRecord, scriptFilePath, config, clients):
     deviceFolder = os.path.join(prefix, deviceName)
 
     clientPath = os.path.join(
-        deviceFolder, 'Client', 'Debug_x64', 'ClientWPF_Tester_Logger.exe')
+        deviceFolder, 'Client', 'Debug_x64', 'ClientWPF_Tester.exe')
 
     activationScriptPath = os.path.join(
         deviceFolder, 'Scripts', 'selfActivationScript.txt')
