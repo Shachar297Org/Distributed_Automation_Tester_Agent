@@ -1,13 +1,5 @@
-import os
-import sys
-import json
-import time
-import traceback
-from utils import *
-from create_device_env import *
-
-
-def CreateDeviceFolders(devicesToCreateRecords: list, maxDevicesToCreate: int, config: object):
+def CreateDeviceFolders(devicesToCreateRecords: list, maxDevicesToCreate: int,
+                        config: object):
     """
     Create device folders
     """
@@ -16,8 +8,11 @@ def CreateDeviceFolders(devicesToCreateRecords: list, maxDevicesToCreate: int, c
     for device in devicesToCreateRecords[:maxDevicesToCreate]:
         sn = device['DeviceSerialNumber']
         gn = device['DeviceType']
-        deviceRecords.append(
-            {'deviceName': '_'.join([sn, gn]), 'DeviceType': gn, 'DeviceSerialNumber': sn})
+        deviceRecords.append({
+            'deviceName': '_'.join([sn, gn]),
+            'DeviceType': gn,
+            'DeviceSerialNumber': sn
+        })
 
     # Create device folders base dir
     deviceFoldersBaseDir = config['DEVICE_FOLDERS_DIR']
@@ -40,6 +35,16 @@ def CreateDeviceFolders(devicesToCreateRecords: list, maxDevicesToCreate: int, c
 
 
 if __name__ == "__main__":
+    from activate_env import *
+    ActivateEnv()
+
+    import sys
+    import json
+    import time
+    import traceback
+    from utils import *
+    from create_device_env import *
+
     print('-----create_device_folders-----')
     print('Arguments: {}'.format(sys.argv))
 

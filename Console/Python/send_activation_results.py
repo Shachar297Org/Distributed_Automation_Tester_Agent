@@ -1,18 +1,15 @@
-
 def SendActivationResults(resultRecords: list, testCenterUrl: str):
     print('Send activation results to test center {}'.format(testCenterUrl))
-    response = requests.post(url=testCenterUrl, headers={
-                             'Content-Type': 'application/json'}, data=json.dumps(resultRecords))
+    response = requests.post(url=testCenterUrl,
+                             headers={'Content-Type': 'application/json'},
+                             data=json.dumps(resultRecords))
     if not response.ok:
         print('Request failed. status code: {}'.format(response.status_code))
 
 
 if __name__ == "__main__":
-    import os
-    curr_dir = os.getcwd()
-    activate_file = os.path.join(
-        curr_dir, 'env', 'Scripts', 'activate_this.py')
-    exec(open(activate_file).read(), {'__file__': activate_file})
+    from activate_env import *
+    ActivateEnv()
 
     import sys
     import json

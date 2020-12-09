@@ -4,7 +4,9 @@ from utils import *
 from record import *
 
 
-def GetEntriesByDeviceAndEvent(dbConn: object, deviceType: str, serialNumber: str, entryKey: str, entryValue: str):
+def GetEntriesByDeviceAndEvent(dbConn: object, deviceType: str,
+                               serialNumber: str, entryKey: str,
+                               entryValue: str):
     """
     Return all entries related to device type, device serial number, entry key and entry value
     """
@@ -15,7 +17,8 @@ def GetEntriesByDeviceAndEvent(dbConn: object, deviceType: str, serialNumber: st
     return resultsSet
 
 
-def GetAllDeviceEntries(dbConn: object, deviceType: str, deviceSerialNumber: str):
+def GetAllDeviceEntries(dbConn: object, deviceType: str,
+                        deviceSerialNumber: str):
     """
     Return all entries related to device type and device serial number
     """
@@ -26,7 +29,8 @@ def GetAllDeviceEntries(dbConn: object, deviceType: str, deviceSerialNumber: str
     return resultsSet
 
 
-def GetKRecentDeviceEntries(dbConn: object, deviceType: str, deviceSerialNumber: str, k: int):
+def GetKRecentDeviceEntries(dbConn: object, deviceType: str,
+                            deviceSerialNumber: str, k: int):
     """
     Return most k recent entries related to device type and device serial number
     """
@@ -114,8 +118,8 @@ def SearchRecordInRDS(dbConn: object, record: object):
     entryKey = record.GetEntryKey()
     entryValue = record.GetEntryValue()
     entryTimeStamp = record.GetEntryTimeStamp()
-    entries = GetEntriesByDeviceAndEvent(
-        dbConn, deviceType, serialNumber, entryKey, entryValue)
+    entries = GetEntriesByDeviceAndEvent(dbConn, deviceType, serialNumber,
+                                         entryKey, entryValue)
     print('Entries from RDS: {}'.format(len(entries)))
 
     for entry in entries:
@@ -153,8 +157,9 @@ def RunComparison(configFilePath: str):
     if not os.path.exists(csvFolder):
         os.mkdir(csvFolder)
 
-    logFiles = [os.path.join(logFolder, filename)
-                for filename in os.listdir(logFolder)]
+    logFiles = [
+        os.path.join(logFolder, filename) for filename in os.listdir(logFolder)
+    ]
 
     notReceivedRecords = []
     for logFile in logFiles:

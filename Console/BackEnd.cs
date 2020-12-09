@@ -18,6 +18,7 @@ namespace Console
     public class BackEnd : IBackendInterface
     {
         System.Timers.Timer _getProcessTimer = new System.Timers.Timer(new TimeSpan(0, 1, 0).TotalMilliseconds);
+        // Every minute the agent checks if a device client process finished running
         Logger _logger;
 
         /// <summary>
@@ -77,7 +78,7 @@ namespace Console
     
 
         /// <summary>
-        /// Get script from test center, run device servers and clients and finally send activation and compare events results
+        /// Get script from test center, run device servers and clients and finally send comparison events results
         /// </summary>
         /// <param name="jsonContent">json containing script file</param>
         public bool SendScript(string jsonContent)
@@ -103,7 +104,7 @@ namespace Console
         }
 
         /// <summary>
-        /// Collect activation results from all devices
+        /// Collect script results (logs) from all devices
         /// </summary>
         private void CollectActivationResults()
         {
@@ -111,7 +112,7 @@ namespace Console
             _logger = new Logger(Settings.Get("LOG_FILE_PATH"));
             try
             {
-                int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "collect_activation_results.py", $"{Settings.Get("CONFIG_FILE")}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
+                int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "collect_script_results.py", $"{Settings.Get("CONFIG_FILE")}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
             }
             catch (Exception ex)
             {
@@ -120,7 +121,7 @@ namespace Console
         }
 
         /// <summary>
-        /// Send activation results to test center
+        /// Send comparison results to test center
         /// </summary>
         private void SendActivationResults()
         {
@@ -134,6 +135,83 @@ namespace Console
             }
         }
 
+        private LumXProcess GetServerByDevice(List<LumXProcess> processList, string ga, string sn)
+        {
+            foreach (var processObj in processList)
+            {
+                if (processObj.Type == "Server")
+                {
+                    return processObj;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Check if device client process finished, then terminate the server process and send log to test center
+        /// Return true if there are still device processes running
+        /// </summary>
+        /// <returns></returns>
+        private bool CheckDeviceClientFinished()
+        {
+            List<LumXProcess> processList = Utils.ReadProcessesFromFile(Settings.Get("PROCESSES_PATH"));
+            foreach (var processObj in processList)
+            {
+                if (processObj.Type == "Client")
+                {
+                    if (Utils.IsProcessRunning(processObj.Pid)){
+                        // Stop the relevant server
+                        _logger.WriteLog($"Client process with PID {processObj.Pid} was terminated.", "info");
+                        string ga = processObj.DeviceType;
+                        string sn = processObj.DeviceSerialNumber;
+                        LumXProcess serverObj = GetServerByDevice(processList, ga, sn);
+                        if (serverObj == null)
+                        {
+                            _logger.WriteLog($"No relevant server process found for device {processObj.DeviceSerialNumber}.", "error");
+                        }
+                        Utils.KillProcessAndChildren(serverObj.Pid);
+                        _logger.WriteLog($"Server process with PID {serverObj.Pid} was terminated.", "info");
+
+                        // Remove server and client processes from list
+                        processList.Remove(processObj);
+                        processList.Remove(serverObj);           
+
+                        // Update processes file
+                        string processesJsonFile = Settings.Get("PROCESSES_PATH");
+                        string processesContent = JsonConvert.SerializeObject(processList);
+                        Utils.WriteToFile(processesJsonFile, processesContent, append: false);
+
+                        // Send log file to test center only if the script failed
+                        _logger.WriteLog($"Send client log to test center if fail.", "info");
+                        SendClientLog(sn, ga);
+
+                        // todo: Run compare and send comparison results
+                        _logger.WriteLog($"Compare events.", "info");
+                        // todo: Collect compare results and create compare_events_results json object in the format: <ga>,<sn>,<event_key>,<event_value>,<creation_time>
+
+                        // todo: Send to test center POST request GetComparisonResults with compare_events_results json
+                        //int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "compare_events.py", $"{Settings.Get("CONFIG_FILE")}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
+                    }
+                }
+            }
+            return processList.Count > 0;
+        }
+
+        private void SendClientLog(string sn, string ga)
+        {
+            Utils.LoadConfig();
+            string deviceName = string.Join("_", new string[] { sn, ga });
+            string deviceFoldersDir = Settings.Get("DEVICE_FOLDERS_DIR");
+            string deviceClientLogFolder = Path.Combine(deviceFoldersDir, deviceName, "Client", "Debug_x64", "Logs");
+            string logFile = Path.Combine(deviceClientLogFolder, "log.txt");
+            string logContent = Utils.ReadFileContent(logFile);
+            if (logContent.Contains("fail"))
+            {
+                string configFile = Settings.Get("CONFIG_FILE");
+                int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "send_client_log.py", $"{configFile} {deviceName} {logFile}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("PYTHON_SCRIPTS_PATH"));
+            }
+        }
+
         /// <summary>
         /// Stop all device clients and servers processes and compare events
         /// </summary>
@@ -141,24 +219,18 @@ namespace Console
         /// <param name="e">event</param>
         private void GetProcessTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            List<LumXProcess> processList = Utils.ReadProcessesFromFile(Settings.Get("PROCESSES_PATH"));
-            foreach (var processObj in processList)
+            _getProcessTimer.Stop();
+            _logger.WriteLog($"---Process timer stopped---", "info");
+            _logger.WriteLog($"Check device client finished.", "info");
+            if (CheckDeviceClientFinished())
             {
-                Utils.KillProcessAndChildren(processObj.Pid);
-                _logger.WriteLog($"Process with PID {processObj.Pid} was terminated.", "info");
+                _logger.WriteLog($"There are no more running devices.", "info");
             }
-
-            // Collect client logs and create activation_results json object in the format: <ga>,<sn>,<activation_status>
-            CollectActivationResults();
-
-            // todo: Send to test center POST request getScriptResults with activation_results json
-            SendActivationResults();
-
-            // todo: Initiate compare events
-
-            // todo: Collect compare results and create compare_events_results json object in the format: <ga>,<sn>,<event_key>,<event_value>,<creation_time>
-
-            // todo: Send to test center POST request GetComparisonResults with compare_events_results json
+            else
+            {
+                _getProcessTimer.Start();
+                _logger.WriteLog($"---Process timer started---", "info");
+            }
         }
     }
 }

@@ -200,6 +200,11 @@ namespace Console.Utilities
             throw new Exception("No internal IP address was found in this system");
         }
 
+        public static bool IsProcessRunning(int pid)
+        {
+            return Process.GetProcesses().Any(p => p.Id == pid);
+        }
+
         public static void LoadConfig()
         {
             string configFilePath = "D:/Config/agent_config.txt";

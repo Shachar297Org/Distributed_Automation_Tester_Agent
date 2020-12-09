@@ -51,8 +51,10 @@ def ReadEventEntriesFromExcelFile(excelFilePath: str, sheetName: str):
     columnNames = list(df.keys())
     eventRecords = []
     for index in range(len(df)):
-        eventRecord = {columnName: str(df[columnName][index])
-                       for columnName in columnNames}
+        eventRecord = {
+            columnName: str(df[columnName][index])
+            for columnName in columnNames
+        }
         eventRecords.append(eventRecord)
     return eventRecords
 
@@ -86,7 +88,10 @@ def WriteToTextFile(filePath: str, content: str):
     """
     if len(content) == 0:
         return
-    with open(filePath, 'w',) as writer:
+    with open(
+            filePath,
+            'w',
+    ) as writer:
         writer.write(content)
 
 
@@ -100,11 +105,14 @@ def RunExecutable(exeFile: str, args: list, shell: bool):
             cmd = ' '.join([exeFile] + args)
             # process = subprocess.Popen('start cmd /K {}'.format(
             #     cmd), cwd=exeDir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=False)
-            process = subprocess.Popen('start cmd /K {}'.format(
-                cmd), cwd=exeDir, shell=True)
+            process = subprocess.Popen('start cmd /K {}'.format(cmd),
+                                       cwd=exeDir,
+                                       shell=True)
         else:
             process = subprocess.Popen(
-                [exeFile] + args, cwd=exeDir, creationflags=subprocess.DETACHED_PROCESS)
+                [exeFile] + args,
+                cwd=exeDir,
+                creationflags=subprocess.DETACHED_PROCESS)
         return process
     except Exception as ex:
         return None

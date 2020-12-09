@@ -23,11 +23,11 @@ def CopyScriptFileToDeviceFolders(devicesToCreate, scriptFilePath, config):
         if not os.path.exists(scriptsFolder):
             os.makedirs(scriptsFolder)
 
-        destScriptPath = os.path.join(
-            deviceFolder, 'Scripts', 'selfActivationScript.txt')
+        destScriptPath = os.path.join(deviceFolder, 'Scripts',
+                                      'selfActivationScript.txt')
 
-        print('Copy script from {} to {}'.format(
-            scriptFilePath, destScriptPath))
+        print('Copy script from {} to {}'.format(scriptFilePath,
+                                                 destScriptPath))
         copyfile(scriptFilePath, destScriptPath)
     time.sleep(5)
 
@@ -56,8 +56,8 @@ def ModifyActivationScripts(devicesToCreate, scriptFilePath, config):
         deviceName = '_'.join(
             [deviceRecord['DeviceSerialNumber'], deviceRecord['DeviceType']])
         deviceFolder = os.path.join(prefix, deviceName)
-        scriptPath = os.path.join(
-            deviceFolder, 'Scripts', 'selfActivationScript.txt')
+        scriptPath = os.path.join(deviceFolder, 'Scripts',
+                                  'selfActivationScript.txt')
         ga = deviceRecord['DeviceType']
         sn = deviceRecord['DeviceSerialNumber']
         ModifyActivationScript(scriptPath, ga, sn)
@@ -69,17 +69,23 @@ def StartServer(deviceRecord, config, servers):
     Start server of a device
     """
     prefix = config['DEVICE_FOLDERS_DIR']
-    deviceName = '_'.join(
-        [deviceRecord['DeviceSerialNumber'], deviceRecord['DeviceType']])
+    sn = deviceRecord['DeviceSerialNumber']
+    ga = deviceRecord['DeviceType']
+    deviceName = '_'.join([sn, ga])
     deviceFolder = os.path.join(prefix, deviceName)
 
-    serverPath = os.path.join(
-        deviceFolder, 'Server', 'Debug', 'LumXServerHost.exe')
+    serverPath = os.path.join(deviceFolder, 'Server', 'Debug',
+                              'LumXServerHost.exe')
     process = RunExecutable(serverPath, args=[], shell=False)
     print('{} server process with pid {} started'.format(
         serverPath, process.pid))
     if process:
-        servers.append({'Name': deviceName + 'Server', 'Pid': process.pid})
+        servers.append({
+            'Pid': process.pid,
+            'DeviceType': ga,
+            'DeviceSerialNumber': sn,
+            'Type': 'Server'
+        })
 
 
 def StartClient(deviceRecord, scriptFilePath, config, clients):
@@ -87,25 +93,32 @@ def StartClient(deviceRecord, scriptFilePath, config, clients):
     Start client of a device
     """
     prefix = config['DEVICE_FOLDERS_DIR']
-    deviceName = '_'.join(
-        [deviceRecord['DeviceSerialNumber'], deviceRecord['DeviceType']])
+    sn = deviceRecord['DeviceSerialNumber']
+    ga = deviceRecord['DeviceType']
+    deviceName = '_'.join([sn, ga])
     deviceFolder = os.path.join(prefix, deviceName)
 
-    clientPath = os.path.join(
-        deviceFolder, 'Client', 'Debug_x64', 'ClientWPF_Tester.exe')
+    clientPath = os.path.join(deviceFolder, 'Client', 'Debug_x64',
+                              'ClientWPF_Tester.exe')
 
-    activationScriptPath = os.path.join(
-        deviceFolder, 'Scripts', 'selfActivationScript.txt')
+    activationScriptPath = os.path.join(deviceFolder, 'Scripts',
+                                        'selfActivationScript.txt')
     print('Script path: {}'.format(activationScriptPath))
 
     print('Client exe path: {}'.format(clientPath))
 
-    process = RunExecutable(
-        clientPath, args=[activationScriptPath, deviceName], shell=False)
+    process = RunExecutable(clientPath,
+                            args=[activationScriptPath, deviceName],
+                            shell=False)
     print('{} client process with pid {} started'.format(
         clientPath, process.pid))
     if process:
-        clients.append({'Name': deviceName + 'Client', 'Pid': process.pid})
+        clients.append({
+            'Pid': process.pid,
+            'DeviceType': ga,
+            'DeviceSerialNumber': sn,
+            'Type': 'Client'
+        })
 
 
 def StartAllServers(devicesToCreate, config, servers):
@@ -121,8 +134,7 @@ def StartAllClients(devicesToCreate, scriptFilePath, config, clients):
     Start all device clients
     """
     for deviceRecord in devicesToCreate:
-        StartClient(deviceRecord, scriptFilePath,
-                    config, clients)
+        StartClient(deviceRecord, scriptFilePath, config, clients)
 
 
 if __name__ == "__main__":
@@ -154,19 +166,16 @@ if __name__ == "__main__":
         jsonContent = ReadFileContent(deviceToCreateFile)
         devicesToCreate = json.loads(jsonContent)[:maxDevicesToStart]
 
-        CopyScriptFileToDeviceFolders(
-            devicesToCreate, scriptFilePath, config)
+        CopyScriptFileToDeviceFolders(devicesToCreate, scriptFilePath, config)
 
         print('Modify GA and SN in activation script of devices.')
-        ModifyActivationScripts(
-            devicesToCreate, scriptFilePath, config)
+        ModifyActivationScripts(devicesToCreate, scriptFilePath, config)
 
         print('Start devices (servers and clients)')
         servers = []
         clients = []
         StartAllServers(devicesToCreate, config, servers)
-        StartAllClients(devicesToCreate, scriptFilePath,
-                        config, clients)
+        StartAllClients(devicesToCreate, scriptFilePath, config, clients)
 
         print('Write server and client processes to json file')
         processes = servers + clients

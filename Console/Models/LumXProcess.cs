@@ -7,18 +7,25 @@ using System.Threading.Tasks;
 namespace Console.Models
 {
     /// <summary>
-    /// LumXProcess contains Process ID (pid) and name (<device_sn>_<device_gn>_server/client)
+    /// LumXProcess contains Process ID (pid), GN, SN and type (server/client)
     /// </summary>
     public class LumXProcess
     {
-        public LumXProcess(int pid, string name)
+        public LumXProcess(int pid, string ga, string sn, string type)
         {
             Pid = pid;
-            Name = name;
+            DeviceType = ga;
+            DeviceSerialNumber = sn;
+            Type = type;
         }
 
         public int Pid { get; set; }
 
-        public string Name { get; set; }
+        public string DeviceType { get; set; }
+
+        public string DeviceSerialNumber { get; set; }
+
+        public string Type { get; set; }
+
     }
 }
