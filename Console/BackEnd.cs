@@ -139,7 +139,7 @@ namespace Console
         {
             foreach (var processObj in processList)
             {
-                if (processObj.Type == "Server")
+                if (processObj.Type == "Server" && processObj.DeviceType == ga && processObj.DeviceSerialNumber == sn)
                 {
                     return processObj;
                 }
@@ -154,62 +154,89 @@ namespace Console
         /// <returns></returns>
         private bool CheckDeviceClientFinished()
         {
-            List<LumXProcess> processList = Utils.ReadProcessesFromFile(Settings.Get("PROCESSES_PATH"));
-            foreach (var processObj in processList)
+            try
             {
-                if (processObj.Type == "Client")
+                List<LumXProcess> processList = Utils.ReadProcessesFromFile(Settings.Get("PROCESSES_PATH"));
+                List<LumXProcess> processesToRemove = new List<LumXProcess>();
+                foreach (var processObj in processList)
                 {
-                    if (Utils.IsProcessRunning(processObj.Pid)){
-                        // Stop the relevant server
-                        _logger.WriteLog($"Client process with PID {processObj.Pid} was terminated.", "info");
-                        string ga = processObj.DeviceType;
-                        string sn = processObj.DeviceSerialNumber;
-                        LumXProcess serverObj = GetServerByDevice(processList, ga, sn);
-                        if (serverObj == null)
+                    if (processObj.Type == "Client")
+                    {
+                        // If client process is NOT running
+                        if (!Utils.IsProcessRunning(processObj.Pid))
                         {
-                            _logger.WriteLog($"No relevant server process found for device {processObj.DeviceSerialNumber}.", "error");
+                            // Stop the relevant server
+                            _logger.WriteLog($"Client process with PID {processObj.Pid} was terminated.", "info");
+                            string ga = processObj.DeviceType;
+                            string sn = processObj.DeviceSerialNumber;
+                            LumXProcess serverObj = GetServerByDevice(processList, ga, sn);
+                            if (serverObj == null)
+                            {
+                                _logger.WriteLog($"No relevant server process found for device {processObj.DeviceSerialNumber}.", "error");
+                            }
+                            Utils.KillProcessAndChildren(serverObj.Pid);
+                            _logger.WriteLog($"Server process with PID {serverObj.Pid} was terminated.", "info");
+
+                            // Remove server and client processes from list
+                            processesToRemove.Add(processObj);
+                            processesToRemove.Add(serverObj);
+
+                            // Send script results to test center
+                            SendScriptResults(sn, ga);
                         }
-                        Utils.KillProcessAndChildren(serverObj.Pid);
-                        _logger.WriteLog($"Server process with PID {serverObj.Pid} was terminated.", "info");
-
-                        // Remove server and client processes from list
-                        processList.Remove(processObj);
-                        processList.Remove(serverObj);           
-
-                        // Update processes file
-                        string processesJsonFile = Settings.Get("PROCESSES_PATH");
-                        string processesContent = JsonConvert.SerializeObject(processList);
-                        Utils.WriteToFile(processesJsonFile, processesContent, append: false);
-
-                        // Send log file to test center only if the script failed
-                        _logger.WriteLog($"Send client log to test center if fail.", "info");
-                        SendClientLog(sn, ga);
-
-                        // todo: Run compare and send comparison results
-                        _logger.WriteLog($"Compare events.", "info");
-                        // todo: Collect compare results and create compare_events_results json object in the format: <ga>,<sn>,<event_key>,<event_value>,<creation_time>
-
-                        // todo: Send to test center POST request GetComparisonResults with compare_events_results json
-                        //int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "compare_events.py", $"{Settings.Get("CONFIG_FILE")}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
                     }
                 }
+
+                // Remove finished processes from list
+                foreach (var processToRemove in processesToRemove)
+                {
+                    processList.Remove(processToRemove);
+                }
+
+                // Update processes file
+                string processesJsonFile = Settings.Get("PROCESSES_PATH");
+                string processesContent = JsonConvert.SerializeObject(processList);
+                Utils.WriteToFile(processesJsonFile, processesContent, append: false);
+
+                return processList.Count > 0;
             }
-            return processList.Count > 0;
+            catch (Exception ex)
+            {
+                _logger.WriteLog($"Error: {ex.Message} {ex.StackTrace}", "error");
+                return true;
+            }
         }
 
-        private void SendClientLog(string sn, string ga)
+        private void SendScriptResults(string sn, string ga)
         {
             Utils.LoadConfig();
             string deviceName = string.Join("_", new string[] { sn, ga });
             string deviceFoldersDir = Settings.Get("DEVICE_FOLDERS_DIR");
             string deviceClientLogFolder = Path.Combine(deviceFoldersDir, deviceName, "Client", "Debug_x64", "Logs");
             string logFile = Path.Combine(deviceClientLogFolder, "log.txt");
+            _logger.WriteLog($"Client log file path: {logFile}", "info");
             string logContent = Utils.ReadFileContent(logFile);
             if (logContent.Contains("fail"))
             {
-                string configFile = Settings.Get("CONFIG_FILE");
-                int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "send_client_log.py", $"{configFile} {deviceName} {logFile}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("PYTHON_SCRIPTS_PATH"));
+                _logger.WriteLog($"Script failed.", "info");
+                SendClientLog(logFile, deviceName);
+                _logger.WriteLog($"Log file was sent to test center.", "info");
             }
+            else
+            {
+                _logger.WriteLog($"Script ran successfully.", "info");
+                _logger.WriteLog($"Compare events.", "info");
+                int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "compare_events.py", $"{Settings.Get("CONFIG_FILE")} {sn} {ga}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
+                _logger.WriteLog($"Comparison results were sent to test center.", "info");
+            }
+        }
+
+        private void SendClientLog(string logFile, string deviceName)
+        {
+            string configFile = Settings.Get("CONFIG_FILE");
+            _logger.WriteLog($"Script failed.", "info");
+            int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "send_client_log.py", $"{configFile} {deviceName} {logFile}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
+            _logger.WriteLog($"Log file was send to test center.", "info");
         }
 
         /// <summary>
@@ -222,14 +249,16 @@ namespace Console
             _getProcessTimer.Stop();
             _logger.WriteLog($"---Process timer stopped---", "info");
             _logger.WriteLog($"Check device client finished.", "info");
+            // If there are still running devices
             if (CheckDeviceClientFinished())
             {
-                _logger.WriteLog($"There are no more running devices.", "info");
-            }
-            else
-            {
+                _logger.WriteLog($"There are still running devices.", "info");
                 _getProcessTimer.Start();
                 _logger.WriteLog($"---Process timer started---", "info");
+            }
+            else
+            {         
+                _logger.WriteLog($"There are no more running devices.", "info");
             }
         }
     }
