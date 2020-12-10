@@ -16,7 +16,6 @@ def ReadLogFile(logFile, columns=None):
         lines = reader.readlines()
         columnsLine = lines[0].strip('\n\"')
         if columns is None:
-            print('***')
             columns = columnsLine.split(',')
         for line in lines[1:]:
             if len(line) == 0 or line[0] == '\n':

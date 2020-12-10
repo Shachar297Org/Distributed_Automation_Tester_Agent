@@ -1,41 +1,52 @@
-def GetComparisonResultsFromLog(logFilePath: str):
+def GetComparisonResultsFromLog(logFilePath: str, rdsRecordStrings: list):
     """
     Return comparison results from a log file
     """
-
-    # Retrieve from RDS all event entries related to the device by SN and GA
-    # Convert device entries to event records
-    # Retieve all event entries from client logs
-    # Get all log events that do not exist in RDS -> missing events
-    # Return the missing events
     missingEventsFromLog = []
+
+    # Retrieve log events from log file
+    print('Load records from log file: {}'.format(logFilePath))
+    logEntries = ReadLogFile(logFilePath)
+    for i in range(len(logEntries)):
+        logEntries[i]['entryTimeStamp'] = ConvertDatetime(
+            logEntries[i]['entryTimeStamp'], '%m/%d/%Y %H:%M:%S %p',
+            '%Y-%m-%d %H:%M:%S')
+    print('Log records: {}'.format(len(logEntries)))
+    logRecords = [ConvertEntryToRecord(entry) for entry in logEntries]
+
+    # Get all log events that do not exist in RDS
+    for logRecord in logRecords:
+        if str(logRecord) not in rdsRecordStrings:
+            missingEventsFromLog.append(logRecord.ToDict())
+    print('{} missing records were found.'.format(len(missingEventsFromLog)))
+
     return missingEventsFromLog
 
 
-def RunCompare(deviceRec: dict):
-    """
-    Return comparison results for a device in format: <ga, sn, eventKey, eventVal, creationTime>
-    """
-    missingEventsOfDevice = []
-    sn = deviceRec['DeviceSerialNumber']
-    ga = deviceRec['DeviceType']
-    deviceName = '_'.join([sn, ga])
-    print('Collecting comparison results for {}'.format(deviceName))
-
-    # Connect to RDS
-    ConnectRDS()
-    """
-    logFilesPath = ...
-    logFiles = os.listdir(logFilesPath)
-    for logFile in logFiles:
-        logFilePath = os.path.join(logFilesPath, logFile)
-        missingEventsFromLog = GetComparisonResultsFromLog(logFilePath)
-        missingEventsOfDevice.extend(missingEventsFromLog)
-    """
-
-    # Disconnect from RDS
-
-    return missingEventsOfDevice
+def ArbitraryResults(sn: str, ga: str):
+    return [
+        {
+            'EventDeviceType': ga,
+            'EventDeviceSerialNumber': sn,
+            'EventKey': 'E1',
+            'EventValue': 'V1',
+            'CreationTime': '12/10/2020 10:37:00'
+        },
+        {
+            'EventDeviceType': ga,
+            'EventDeviceSerialNumber': sn,
+            'EventKey': 'E2',
+            'EventValue': 'V2',
+            'CreationTime': '12/10/2020 10:37:01'
+        },
+        {
+            'EventDeviceType': ga,
+            'EventDeviceSerialNumber': sn,
+            'EventKey': 'E3',
+            'EventValue': 'V3',
+            'CreationTime': '12/10/2020 10:37:02'
+        },
+    ]
 
 
 def CollectComparisonResults(config: object, sn: str, ga: str,
@@ -43,6 +54,7 @@ def CollectComparisonResults(config: object, sn: str, ga: str,
     missingEvents = []
     deviceName = '_'.join([sn, ga])
     print('Collecting comparison results for {}'.format(deviceName))
+    deviceFoldersDir = config['DEVICE_FOLDERS_DIR']
 
     # Connect to RDS
     host = config['RDS_HOST']
@@ -51,40 +63,33 @@ def CollectComparisonResults(config: object, sn: str, ga: str,
     password = config['RDS_PASS']
     rdsSim = True if config['RDS_SIM'].lower() == 'true' else False
     if rdsSim:
-        return [
-            {
-                'EventDeviceType': ga,
-                'EventDeviceSerialNumber': sn,
-                'EventKey': 'E1',
-                'EventValue': 'V1',
-                'CreationTime': '12/10/2020 10:37:00'
-            },
-            {
-                'EventDeviceType': ga,
-                'EventDeviceSerialNumber': sn,
-                'EventKey': 'E2',
-                'EventValue': 'V2',
-                'CreationTime': '12/10/2020 10:37:01'
-            },
-            {
-                'EventDeviceType': ga,
-                'EventDeviceSerialNumber': sn,
-                'EventKey': 'E3',
-                'EventValue': 'V3',
-                'CreationTime': '12/10/2020 10:37:02'
-            },
-        ]
-    """
-    ConnectRDS(host, db, username, password)
-    logFilesPath = ...
-    logFiles = os.listdir(logFilesPath)
-    for logFile in logFiles:
-        logFilePath = os.path.join(logFilesPath, logFile)
-        missingEventsFromLog = GetComparisonResultsFromLog(logFilePath)
-        missingEventsOfDevice.extend(missingEventsFromLog)
+        return ArbitraryResults(sn, ga)
+    dbConn = ConnectRDS(host, db, username, password)
+    if not dbConn:
+        print('Error: Could not connect to RDS.')
+        return []
 
-    Disconnect from RDS
-    """
+    # Retrieve from RDS all device events
+    print('Retrieve from RDS all event entries related to the device')
+    rdsEntries = GetAllDeviceEntries(dbConn, ga, sn)
+    print('Entries in RDS: {}'.format(len(rdsEntries)))
+    rdsRecords = [ConvertEntryToRecord(entry) for entry in rdsEntries]
+    for i in range(len(rdsRecords)):
+        rdsRecords[i].entryTimeStamp = ConvertDatetime(
+            rdsRecords[i].entryTimeStamp, '%Y-%m-%d %H:%M:%S',
+            '%Y-%m-%d %H:%M:%S')
+    rdsRecordStrings = [str(rdsRecord) for rdsRecord in rdsRecords]
+    DisconnectRDS(dbConn)
+
+    logsFolderPath = os.path.join(deviceFoldersDir, deviceName, 'Client',
+                                  'Debug_x64', 'Logs', '1.0.0.0')
+    logFileNames = os.listdir(logsFolderPath)
+    for logFileName in logFileNames:
+        logFilePath = os.path.join(logsFolderPath, logFileName)
+        missingEventsFromLog = GetComparisonResultsFromLog(
+            logFilePath, rdsRecordStrings)
+        missingEvents.extend(missingEventsFromLog)
+
     return missingEvents
 
 
@@ -141,9 +146,6 @@ if __name__ == "__main__":
                                                      deviceName + '.csv')
 
         WriteToCsvFile(comparisonResultsOfDeviceFile, comparisonResults)
-
-        # with open(comparisonResultsOfDeviceFile, 'w') as fp:
-        #     json.dump(comparisonResults, fp)
 
         tesCenterUrl = config['TEST_CENTER_URL']
         SendComparisonResults(tesCenterUrl, comparisonResults)

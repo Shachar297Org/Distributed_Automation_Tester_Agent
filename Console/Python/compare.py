@@ -103,6 +103,11 @@ def ConnectRDS(host: str, db: str, username: str, password: str):
         return None
 
 
+def DisconnectRDS(dbConn: object):
+    if dbConn:
+        dbConn.Close()
+
+
 def SearchRecordInRDS(dbConn: object, record: object):
     """
     Search record in RDS by its hash value (unique key)

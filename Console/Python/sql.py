@@ -1,5 +1,4 @@
 import mysql.connector as mysql
-
 """
 MySQL Database Connector
 """
@@ -17,8 +16,10 @@ class DbConnector:
         self.password = password
 
         try:
-            self.conn = mysql.connect(
-                host=host, user=user, password=password, database=db)
+            self.conn = mysql.connect(host=host,
+                                      user=user,
+                                      password=password,
+                                      database=db)
         except Exception as ex:
             print(ex)
             self.conn = None
@@ -65,8 +66,10 @@ class DbConnector:
             records = cursor.fetchall()
             recordDictionaries = []
             for record in records:
-                recordDict = {columns[i]: record[i]
-                              for i in range(len(columns))}
+                recordDict = {
+                    columns[i]: record[i]
+                    for i in range(len(columns))
+                }
                 recordDictionaries.append(recordDict)
             return recordDictionaries
         else:
