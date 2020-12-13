@@ -225,10 +225,10 @@ namespace Console
             else
             {
                 _logger.WriteLog($"Script ran successfully.", "info");
-                _logger.WriteLog($"Compare events.", "info");
-                int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "compare_events.py", $"{Settings.Get("CONFIG_FILE")} {sn} {ga}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
-                _logger.WriteLog($"Comparison results were sent to test center.", "info");
             }
+            _logger.WriteLog($"Compare events.", "info");
+            int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "compare_events.py", $"{Settings.Get("CONFIG_FILE")} {sn} {ga}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
+            _logger.WriteLog($"Comparison results were sent to test center.", "info");       
         }
 
         private void SendClientLog(string logFile, string deviceName)

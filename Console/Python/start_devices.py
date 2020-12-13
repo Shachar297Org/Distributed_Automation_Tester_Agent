@@ -73,9 +73,8 @@ def StartServer(deviceRecord, config, servers):
     ga = deviceRecord['DeviceType']
     deviceName = '_'.join([sn, ga])
     deviceFolder = os.path.join(prefix, deviceName)
-
-    serverPath = os.path.join(deviceFolder, 'Server', 'Debug',
-                              'LumXServerHost.exe')
+    serverExeName = config['SERVER_EXE_NAME']
+    serverPath = os.path.join(deviceFolder, 'Server', 'Debug', serverExeName)
     process = RunExecutable(serverPath, args=[], shell=False)
     print('{} server process with pid {} started'.format(
         serverPath, process.pid))
@@ -98,8 +97,10 @@ def StartClient(deviceRecord, scriptFilePath, config, clients):
     deviceName = '_'.join([sn, ga])
     deviceFolder = os.path.join(prefix, deviceName)
 
+    clientExeName = config['CLIENT_EXE_NAME']
+
     clientPath = os.path.join(deviceFolder, 'Client', 'Debug_x64',
-                              'ClientWPF_Tester.exe')
+                              clientExeName)
 
     activationScriptPath = os.path.join(deviceFolder, 'Scripts',
                                         'selfActivationScript.txt')
@@ -169,7 +170,7 @@ if __name__ == "__main__":
         CopyScriptFileToDeviceFolders(devicesToCreate, scriptFilePath, config)
 
         print('Modify GA and SN in activation script of devices.')
-        ModifyActivationScripts(devicesToCreate, scriptFilePath, config)
+        #ModifyActivationScripts(devicesToCreate, scriptFilePath, config)
 
         print('Start devices (servers and clients)')
         servers = []
