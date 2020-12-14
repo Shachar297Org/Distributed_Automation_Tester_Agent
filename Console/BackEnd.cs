@@ -182,6 +182,11 @@ namespace Console
             }
         }
 
+        /// <summary>
+        /// Send script results containing client log in case of failure and compare results
+        /// </summary>
+        /// <param name="sn">Devcie SN</param>
+        /// <param name="ga">Device GA</param>
         private void SendScriptResults(string sn, string ga)
         {
             Utils.LoadConfig();

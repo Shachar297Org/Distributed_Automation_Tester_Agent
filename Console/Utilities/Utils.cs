@@ -64,6 +64,10 @@ namespace Console.Utilities
             return returnCode;
         }
 
+        /// <summary>
+        /// Terminates process and all its children by pid
+        /// </summary>
+        /// <param name="pid"></param>
         public static void KillProcessAndChildren(int pid)
         {
             // Cannot close 'system idle process'
@@ -187,6 +191,10 @@ namespace Console.Utilities
             }
         }
 
+        /// <summary>
+        /// Get internal IP address of the host
+        /// </summary>
+        /// <returns></returns>
         public static string GetInternalIPAddress()
         {
             var host = Dns.GetHostEntry(Dns.GetHostName());
@@ -200,11 +208,19 @@ namespace Console.Utilities
             throw new Exception("No internal IP address was found in this system");
         }
 
+        /// <summary>
+        /// Check if process is running
+        /// </summary>
+        /// <param name="pid">Process ID</param>
+        /// <returns>True or false</returns>
         public static bool IsProcessRunning(int pid)
         {
             return Process.GetProcesses().Any(p => p.Id == pid);
         }
 
+        /// <summary>
+        /// Load configuration from config file
+        /// </summary>
         public static void LoadConfig()
         {
             string configFilePath = "D:/Config/agent_config.txt";
