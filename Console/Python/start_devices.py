@@ -75,7 +75,7 @@ def StartServer(deviceRecord, config, servers):
     deviceFolder = os.path.join(prefix, deviceName)
     serverExeName = config['SERVER_EXE_NAME']
     serverPath = os.path.join(deviceFolder, 'Server', 'Debug', serverExeName)
-    process = RunExecutable(serverPath, args=[], shell=False)
+    process = RunExecutable(serverPath, args=[], shell=True)
     print('{} server process with pid {} started'.format(
         serverPath, process.pid))
     if process:
@@ -110,7 +110,7 @@ def StartClient(deviceRecord, scriptFilePath, config, clients):
 
     process = RunExecutable(clientPath,
                             args=[activationScriptPath, deviceName],
-                            shell=False)
+                            shell=True)
     print('{} client process with pid {} started'.format(
         clientPath, process.pid))
     if process:
@@ -169,7 +169,7 @@ if __name__ == "__main__":
 
         CopyScriptFileToDeviceFolders(devicesToCreate, scriptFilePath, config)
 
-        print('Modify GA and SN in activation script of devices.')
+        #print('Modify GA and SN in activation script of devices.')
         #ModifyActivationScripts(devicesToCreate, scriptFilePath, config)
 
         print('Start devices (servers and clients)')

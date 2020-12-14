@@ -101,40 +101,15 @@ namespace Console
                 _logger.WriteLog($"Error in sendScript: {ex.Message} {ex.StackTrace}", "error");
                 return false;
             }
-        }
+        }  
 
         /// <summary>
-        /// Collect script results (logs) from all devices
+        /// Return server LumenisX process object related to the device ga, sn>
         /// </summary>
-        private void CollectActivationResults()
-        {
-            Utils.LoadConfig();
-            _logger = new Logger(Settings.Get("LOG_FILE_PATH"));
-            try
-            {
-                int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "collect_script_results.py", $"{Settings.Get("CONFIG_FILE")}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
-            }
-            catch (Exception ex)
-            {
-                _logger.WriteLog($"Error in collectActivationResults: {ex.Message} {ex.StackTrace}", "error");
-            }
-        }
-
-        /// <summary>
-        /// Send comparison results to test center
-        /// </summary>
-        private void SendActivationResults()
-        {
-            try
-            {
-                int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "send_activation_results.py", $"{Settings.Get("CONFIG_FILE")}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
-            }
-            catch (Exception ex)
-            {
-                _logger.WriteLog($"Error in sendActivationResults: {ex.Message} {ex.StackTrace}", "error");
-            }
-        }
-
+        /// <param name="processList">process list</param>
+        /// <param name="ga">Device GA</param>
+        /// <param name="sn">Device SN</param>
+        /// <returns></returns>
         private LumXProcess GetServerByDevice(List<LumXProcess> processList, string ga, string sn)
         {
             foreach (var processObj in processList)
@@ -231,6 +206,11 @@ namespace Console
             _logger.WriteLog($"Comparison results were sent to test center.", "info");       
         }
 
+        /// <summary>
+        /// Send client log content to test center
+        /// </summary>
+        /// <param name="logFile">log file path</param>
+        /// <param name="deviceName">Device name: sn_ga</param>
         private void SendClientLog(string logFile, string deviceName)
         {
             string configFile = Settings.Get("CONFIG_FILE");
