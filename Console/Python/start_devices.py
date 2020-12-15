@@ -1,11 +1,3 @@
-import os
-import sys
-import json
-import time
-import re
-from utils import *
-from create_device_env import *
-
 
 def CopyScriptFileToDeviceFolders(devicesToCreate, scriptFilePath, config):
     """
@@ -75,7 +67,7 @@ def StartServer(deviceRecord, config, servers):
     deviceFolder = os.path.join(prefix, deviceName)
     serverExeName = config['SERVER_EXE_NAME']
     serverPath = os.path.join(deviceFolder, 'Server', 'Debug', serverExeName)
-    process = RunExecutable(serverPath, args=[], shell=True)
+    process = RunExecutable(serverPath, args=[], shell=False)
     print('{} server process with pid {} started'.format(
         serverPath, process.pid))
     if process:
@@ -139,6 +131,16 @@ def StartAllClients(devicesToCreate, scriptFilePath, config, clients):
 
 
 if __name__ == "__main__":
+    from activate_env import *
+    ActivateEnv()
+
+    import sys
+    import json
+    import time
+    import re
+    from utils import *
+    from create_device_env import *
+
     print('-----start_devices-----')
     print('Arguments: {}'.format(sys.argv))
 
@@ -183,6 +185,7 @@ if __name__ == "__main__":
         jsonString = json.dumps(processes)
         WriteToTextFile(processesPath, jsonString)
         print('-----success-----')
+        exit(0)
 
     except Exception as ex:
         print('Error: {}'.format(ex))
