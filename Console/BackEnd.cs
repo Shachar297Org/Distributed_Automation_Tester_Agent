@@ -17,8 +17,8 @@ namespace Console
 {
     public class BackEnd : IBackendInterface
     {
-        System.Timers.Timer _getProcessTimer = new System.Timers.Timer(new TimeSpan(0, 1, 0).TotalMilliseconds);
         // Every minute the agent checks if a device client process finished running
+        System.Timers.Timer _getProcessTimer = new System.Timers.Timer(new TimeSpan(0, 1, 0).TotalMilliseconds);
         Logger _logger;
 
         /// <summary>
@@ -30,6 +30,7 @@ namespace Console
             _logger = new Logger(Settings.Get("LOG_FILE_PATH"));
             try
             {
+                //int runningTimerSec = int.Parse(Settings.Get("DEVICE_RUNNING_TIMER_IN_SEC"));
                 string internalIP = Utils.GetInternalIPAddress();
                 _logger.WriteLog($"Agent internal IP: {internalIP}", "info");
                 string agentUrl = internalIP + ":" + Settings.Get("AGENT_PORT");
@@ -90,7 +91,8 @@ namespace Console
                 ScriptFile scriptFileObj = JsonConvert.DeserializeObject<ScriptFile>(jsonContent);
                 Utils.WriteToFile(Settings.Get("SCRIPT_PATH"), scriptFileObj.Content, false);
                 int maxDevicesToCreate = int.Parse(Settings.Get("MAX_DEVICES_TO_CREATE"));
-                int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "start_devices.py", $"{Settings.Get("CONFIG_FILE")}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
+                // int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "start_devices.py", $"{Settings.Get("CONFIG_FILE")}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
+                Utils.RunCommandAsync(Settings.Get("PYTHON"), "start_devices.py", $"{Settings.Get("CONFIG_FILE")}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
                 Thread.Sleep(int.Parse(Settings.Get("PROCESS_UPTIME_IN_MS")));
                 _getProcessTimer.Elapsed += GetProcessTimer_Elapsed;
                 _getProcessTimer.Start();
@@ -232,6 +234,7 @@ namespace Console
         private void GetProcessTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             _getProcessTimer.Stop();
+            // todo: check the use of interval method
             _logger.WriteLog($"---Process timer stopped---", "info");
             _logger.WriteLog($"Check device client finished.", "info");
             // If there are still running devices
