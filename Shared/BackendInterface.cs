@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace Shared
 {
     public interface IBackendInterface
     {
-        bool Init();
+        Task<bool> Init();
 
         bool SendDevices(string jsonContent);
 

@@ -19,32 +19,32 @@ namespace Console
     {
         // Every minute the agent checks if a device client process finished running
         System.Timers.Timer _getProcessTimer = new System.Timers.Timer(new TimeSpan(0, 1, 0).TotalMilliseconds);
-        Logger _logger;
+        //Logger _logger;
 
         /// <summary>
         /// Create agent base directory and send connect command to test center
         /// </summary>
-        public bool Init()
+        public async Task<bool> Init()
         {
             Utils.LoadConfig();
-            _logger = new Logger(Settings.Get("LOG_FILE_PATH"));
+            //_logger = new Logger(Settings.Get("LOG_FILE_PATH"));
             try
             {
                 //int runningTimerSec = int.Parse(Settings.Get("DEVICE_RUNNING_TIMER_IN_SEC"));
                 string internalIP = Utils.GetInternalIPAddress();
-                _logger.WriteLog($"Agent internal IP: {internalIP}", "info");
+                Utils.WriteLog($"Agent internal IP: {internalIP}", "info");
                 string agentUrl = internalIP + ":" + Settings.Get("AGENT_PORT");
                 Settings.Set("AGENT_URL", agentUrl);
-                _logger.WriteLog($"Create agent folder for {agentUrl}", "info");
+                Utils.WriteLog($"Create agent folder for {agentUrl}", "info");
                 Directory.CreateDirectory(Settings.Get("AGENT_DIR_PATH"));
                 string cwd = Directory.GetCurrentDirectory();
                 string testCenterUrl = Settings.Get("TEST_CENTER_URL");
-                _logger.WriteLog($"Send connect to test center in {testCenterUrl}", "info");
-                Utils.RunCommand("curl", testCenterUrl + $"/connect?port={Settings.Get("AGENT_PORT")}", "", cwd, Settings.Get("OUTPUT"));
+                Utils.WriteLog($"Send connect to test center in {testCenterUrl}", "info");
+                await Utils.RunCommandAsync("curl", testCenterUrl + $"/connect?port={Settings.Get("AGENT_PORT")}", "", cwd, Settings.Get("OUTPUT"));
                 return true;
             }
             catch (Exception ex) {
-                _logger.WriteLog($"Error in init: {ex.Message} {ex.StackTrace}", "error");
+                Utils.WriteLog($"Error in init: {ex.Message} {ex.StackTrace}", "error");
                 return false;
             }
         }
@@ -56,23 +56,23 @@ namespace Console
         public bool SendDevices(string jsonContent)
         {
             Utils.LoadConfig();
-            _logger = new Logger(Settings.Get("LOG_FILE_PATH"));
+            //_logger = new Logger(Settings.Get("LOG_FILE_PATH"));
 
-            _logger.WriteLog("Received device list", "info");
+            Utils.WriteLog("Received device list", "info");
             try {
-                _logger.WriteLog($"Json content: {jsonContent}", "info");
+                Utils.WriteLog($"Json content: {jsonContent}", "info");
                 List<Device> devicesToCreate = JsonConvert.DeserializeObject<List<Device>>(jsonContent);
                 Utils.WriteDeviceListToFile(devicesToCreate, Settings.Get("DEVICES_TO_CREATE_PATH"));
-                _logger.WriteLog("Start creating device folders", "info");
+                Utils.WriteLog("Start creating device folders", "info");
                 int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "create_device_folders.py", $"{Settings.Get("CONFIG_FILE")}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
                 string cwd = Directory.GetCurrentDirectory();
-                _logger.WriteLog($"Send agentReady to test center in {Settings.Get("TEST_CENTER_URL")}", "info");
+                Utils.WriteLog($"Send agentReady to test center in {Settings.Get("TEST_CENTER_URL")}", "info");
                 Utils.RunCommand("curl", Settings.Get("TEST_CENTER_URL") + $"/agentReady?port={Settings.Get("AGENT_PORT")}", "", cwd, Settings.Get("OUTPUT"));
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.WriteLog($"Error in sendDevices: {ex.Message} {ex.StackTrace}", "error");
+                Utils.WriteLog($"Error in sendDevices: {ex.Message} {ex.StackTrace}", "error");
                 return false;
             }
         }
@@ -85,7 +85,7 @@ namespace Console
         public bool SendScript(string jsonContent)
         {
             Utils.LoadConfig();
-            _logger = new Logger(Settings.Get("LOG_FILE_PATH"));
+            //_logger = new Logger(Settings.Get("LOG_FILE_PATH"));
             try
             {
                 ScriptFile scriptFileObj = JsonConvert.DeserializeObject<ScriptFile>(jsonContent);
@@ -100,7 +100,7 @@ namespace Console
             }
             catch (Exception ex)
             {
-                _logger.WriteLog($"Error in sendScript: {ex.Message} {ex.StackTrace}", "error");
+                Utils.WriteLog($"Error in sendScript: {ex.Message} {ex.StackTrace}", "error");
                 return false;
             }
         }  
@@ -143,16 +143,16 @@ namespace Console
                         if (!Utils.IsProcessRunning(processObj.Pid))
                         {
                             // Stop the relevant server
-                            _logger.WriteLog($"Client process with PID {processObj.Pid} was terminated.", "info");
+                            Utils.WriteLog($"Client process with PID {processObj.Pid} was terminated.", "info");
                             string ga = processObj.DeviceType;
                             string sn = processObj.DeviceSerialNumber;
                             LumXProcess serverObj = GetServerByDevice(processList, ga, sn);
                             if (serverObj == null)
                             {
-                                _logger.WriteLog($"No relevant server process found for device {processObj.DeviceSerialNumber}.", "error");
+                                Utils.WriteLog($"No relevant server process found for device {processObj.DeviceSerialNumber}.", "error");
                             }
                             Utils.KillProcessAndChildren(serverObj.Pid);
-                            _logger.WriteLog($"Server process with PID {serverObj.Pid} was terminated.", "info");
+                            Utils.WriteLog($"Server process with PID {serverObj.Pid} was terminated.", "info");
 
                             // Remove server and client processes from list
                             processesToRemove.Add(processObj);
@@ -179,7 +179,7 @@ namespace Console
             }
             catch (Exception ex)
             {
-                _logger.WriteLog($"Error: {ex.Message} {ex.StackTrace}", "error");
+                Utils.WriteLog($"Error: {ex.Message} {ex.StackTrace}", "error");
                 return true;
             }
         }
@@ -196,21 +196,21 @@ namespace Console
             string deviceFoldersDir = Settings.Get("DEVICE_FOLDERS_DIR");
             string deviceClientLogFolder = Path.Combine(deviceFoldersDir, deviceName, "Client", "Debug_x64", "Logs");
             string logFile = Path.Combine(deviceClientLogFolder, "log.txt");
-            _logger.WriteLog($"Client log file path: {logFile}", "info");
+            Utils.WriteLog($"Client log file path: {logFile}", "info");
             string logContent = Utils.ReadFileContent(logFile);
             if (logContent.Contains("fail"))
             {
-                _logger.WriteLog($"Script failed.", "info");
+                Utils.WriteLog($"Script failed.", "info");
                 SendClientLog(logFile, deviceName);
-                _logger.WriteLog($"Log file was sent to test center.", "info");
+                Utils.WriteLog($"Log file was sent to test center.", "info");
             }
             else
             {
-                _logger.WriteLog($"Script ran successfully.", "info");
+                Utils.WriteLog($"Script ran successfully.", "info");
             }
-            _logger.WriteLog($"Compare events.", "info");
+            Utils.WriteLog($"Compare events.", "info");
             int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "compare_events.py", $"{Settings.Get("CONFIG_FILE")} {sn} {ga}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
-            _logger.WriteLog($"Comparison results were sent to test center.", "info");       
+            Utils.WriteLog($"Comparison results were sent to test center.", "info");       
         }
 
         /// <summary>
@@ -221,9 +221,9 @@ namespace Console
         private void SendClientLog(string logFile, string deviceName)
         {
             string configFile = Settings.Get("CONFIG_FILE");
-            _logger.WriteLog($"Script failed.", "info");
+            Utils.WriteLog($"Script failed.", "info");
             int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "send_client_log.py", $"{configFile} {deviceName} {logFile}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
-            _logger.WriteLog($"Log file was send to test center.", "info");
+            Utils.WriteLog($"Log file was send to test center.", "info");
         }
 
         /// <summary>
@@ -235,18 +235,18 @@ namespace Console
         {
             _getProcessTimer.Stop();
             // todo: check the use of interval method
-            _logger.WriteLog($"---Process timer stopped---", "info");
-            _logger.WriteLog($"Check device client finished.", "info");
+            Utils.WriteLog($"---Process timer stopped---", "info");
+            Utils.WriteLog($"Check device client finished.", "info");
             // If there are still running devices
             if (CheckDeviceClientFinished())
             {
-                _logger.WriteLog($"There are still running devices.", "info");
+                Utils.WriteLog($"There are still running devices.", "info");
                 _getProcessTimer.Start();
-                _logger.WriteLog($"---Process timer started---", "info");
+                Utils.WriteLog($"---Process timer started---", "info");
             }
             else
-            {         
-                _logger.WriteLog($"There are no more running devices.", "info");
+            {
+                Utils.WriteLog($"There are no more running devices.", "info");
             }
         }
     }

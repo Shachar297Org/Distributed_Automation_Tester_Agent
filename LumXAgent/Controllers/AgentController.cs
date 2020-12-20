@@ -10,6 +10,7 @@ using System.Net.Http;
 using System.Web.Http;
 using System.Text;
 using System.Web.Http.Results;
+using System.Threading.Tasks;
 
 namespace LumXAgent.Controllers
 {
@@ -36,9 +37,9 @@ namespace LumXAgent.Controllers
         // Get: init
         [HttpGet]
         [Route("init")]
-        public JsonResult<string> Init()
+        public async Task<JsonResult<string>> Init()
         {
-            bool result = backEnd.Init();
+            bool result = await backEnd.Init();
             return Json("{Result: " + result + "}");
         }
 
