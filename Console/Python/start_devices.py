@@ -102,7 +102,7 @@ def StartClient(deviceRecord, scriptFilePath, config, clients):
 
     process = RunExecutable(clientPath,
                             args=[activationScriptPath, deviceName],
-                            shell=True)
+                            shell=False)
     print('{} client process with pid {} started'.format(
         clientPath, process.pid))
     if process:
