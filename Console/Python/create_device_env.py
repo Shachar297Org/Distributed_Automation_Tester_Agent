@@ -39,8 +39,12 @@ def ReadDevicesCsv(csvFile: str, config: object):
             deviceName = fields[0]
             deviceType = fields[1]
             serialNumber = fields[2]
-            clients.append(
-                {'deviceName': deviceName, 'path': os.path.join(prefix, deviceName), 'deviceType': deviceType, 'serialNumber': serialNumber})
+            clients.append({
+                'deviceName': deviceName,
+                'path': os.path.join(prefix, deviceName),
+                'deviceType': deviceType,
+                'serialNumber': serialNumber
+            })
 
     return clients
 
@@ -66,8 +70,9 @@ def UpdateXmlConfigFile(xmlFile: str, attributeKey: str, attributeValue: str):
     """
     tree = ET.parse(xmlFile)
     root = tree.getroot()
-    elements = [elem for elem in root.iter(
-    ) if attributeKey in elem.attrib.values()]
+    elements = [
+        elem for elem in root.iter() if attributeKey in elem.attrib.values()
+    ]
     if len(elements) == 0:
         return None
     element = elements[0]
@@ -80,6 +85,8 @@ def CreateDeviceFolder(device: dict, config: object):
     """
     Create device folder
     """
+    env = config['ENV']
+    lumenisApiHost = config['API_LUMENIS']
     clientApp = config['CLIENT_PATH']
     serverApp = config['SERVER_PATH']
     activationApp = config['ACTIVATOR_PATH']
@@ -100,8 +107,9 @@ def CreateDeviceFolder(device: dict, config: object):
     # if not os.path.exists(os.path.join(deviceFolder, 'Client')):
     CopyDirectory(clientApp, os.path.join(deviceFolder, 'Client'))
 
-    UpdateHaspFile(os.path.join(
-        deviceFolder, 'Client', 'Debug_x64', 'HASP_SIMUL.ini'), device)
+    UpdateHaspFile(
+        os.path.join(deviceFolder, 'Client', 'Debug_x64', 'HASP_SIMUL.ini'),
+        device)
 
     # Create server folder
     # if not os.path.exists(os.path.join(deviceFolder, 'Server')):
@@ -110,11 +118,17 @@ def CreateDeviceFolder(device: dict, config: object):
     logsFolder = os.path.join(deviceFolder, 'Logs')
     certFolder = os.path.join(deviceFolder, 'LumXCertificationFolder')
 
-    UpdateXmlConfigFile(os.path.join(deviceFolder, 'Server', 'Debug',
-                                     'ConfigurationSettings.Server.config'), 'LogFilesLocation', logsFolder)
+    serverConfigPath = os.path.join(deviceFolder, 'Server', 'Debug',
+                                    'ConfigurationSettings.Server.config')
 
-    UpdateXmlConfigFile(os.path.join(deviceFolder, 'Server', 'Debug',
-                                     'ConfigurationSettings.Server.config'), 'CertificationFolderLocation', certFolder)
+    UpdateXmlConfigFile(serverConfigPath, 'LogFilesLocation', logsFolder)
+
+    UpdateXmlConfigFile(serverConfigPath, 'CertificationFolderLocation',
+                        certFolder)
+
+    UpdateXmlConfigFile(serverConfigPath, 'aws-environment', env)
+
+    UpdateXmlConfigFile(serverConfigPath, 'endpoint', lumenisApiHost)
 
     # Create acivator folder
     # if not os.path.exists(os.path.join(deviceFolder, 'LumXActivator')):
@@ -125,7 +139,7 @@ def CreateDeviceFolder(device: dict, config: object):
         os.mkdir(os.path.join(deviceFolder, 'Scripts'))
 
     # destScriptPath = os.path.join(
-        # deviceFolder, 'Scripts', 'activationScript.txt')
+    # deviceFolder, 'Scripts', 'activationScript.txt')
     # copyfile(activationScriptFilePath, destScriptPath)
 
     # UpdateXmlConfigFile(os.path.join(deviceFolder, 'LumXActivator',

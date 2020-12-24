@@ -1,11 +1,14 @@
 TEST_CENTER_URL=http://localhost:5000
 AGENT_PORT=5001
 AGENT_DIR_PATH=D:/agents/agent-5001
+ENV=int
 RDS_HOST=int-rds.cluster-cr4yyxykuuox.us-east-1.rds.amazonaws.com
 RDS_DB=Processing
 RDS_USER=stellarReader
 RDS_PASS=S4dZAZ#L
 RDS_SIM=False
+API_LUMENIS=https://api.int.lumenisx.lumenis.com
+API_EVENT=http://<URL>/processing/v1/events?deviceSerialNumber=<SN>&deviceType=<GA>
 DEVICES_TO_CREATE_PATH=D:/agents/agent-5001/devices_to_create.json
 PROCESSES_PATH=D:/agents/agent-5001/processes.json
 MAX_DEVICES_TO_CREATE=5
