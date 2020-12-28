@@ -102,7 +102,7 @@ def StartClient(deviceRecord, scriptFilePath, config, clients):
 
     process = RunExecutable(clientPath,
                             args=[activationScriptPath, deviceName],
-                            shell=True)
+                            shell=False)
     print('{} client process with pid {} started'.format(
         clientPath, process.pid))
     if process:
@@ -120,6 +120,7 @@ def StartAllServers(devicesToCreate, config, servers):
     """
     for deviceRecord in devicesToCreate:
         StartServer(deviceRecord, config, servers)
+        time.sleep(0.5)
 
 
 def StartAllClients(devicesToCreate, scriptFilePath, config, clients):
@@ -128,6 +129,7 @@ def StartAllClients(devicesToCreate, scriptFilePath, config, clients):
     """
     for deviceRecord in devicesToCreate:
         StartClient(deviceRecord, scriptFilePath, config, clients)
+        time.sleep(0.5)
 
 
 if __name__ == "__main__":
