@@ -42,6 +42,19 @@ def ConvertDatetime(datetimeStr: str, fromFormat: str, toFormat: str):
     return dt.strftime(toFormat)
 
 
+def ConvertDatetimeFromAMPMTo24(datetimeStr: str, fromFormat: str):
+    if datetimeStr.endswith('AM'):
+        return datetimeStr
+    elif datetimeStr.endswith('PM'):
+        dt = datetime.datetime.strptime(datetimeStr, fromFormat)
+        hour = dt.hour
+        hour += 12
+        dt = dt.replace(hour=hour)
+        return dt.strftime('%Y-%m-%d %H:%M:%S')
+    else:
+        return datetimeStr
+
+
 def ReadEventEntriesFromExcelFile(excelFilePath: str, sheetName: str):
     """
     Read event entries from excel file and sheet

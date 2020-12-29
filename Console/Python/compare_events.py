@@ -60,14 +60,13 @@ def GetComparisonResultsFromLog(logFilePath: str, rdsRecordStrings: list):
         'entryTimestamp'
     ]
     logEntries = ReadLogFile(logFilePath, columns)
-    for i in range(len(logEntries)):
-        logEntries[i]['entryTimestamp'] = ConvertDatetime(
-            logEntries[i]['entryTimestamp'], '%m/%d/%Y %H:%M:%S %p',
-            '%Y-%m-%d %H:%M:%S')
-    print('Log records: {}'.format(len(logEntries)))
-    logRecords = [ConvertEntryToRecord(entry) for entry in logEntries]
 
-    print('----', logRecords[0], '-----')
+    for i in range(len(logEntries)):
+        logEntries[i]['entryTimestamp'] = ConvertDatetimeFromAMPMTo24(
+            logEntries[i]['entryTimestamp'], '%m/%d/%Y %H:%M:%S %p')
+    print('Log records: {}'.format(len(logEntries)))
+
+    logRecords = [ConvertEntryToRecord(entry) for entry in logEntries]
 
     # Get all log events that do not exist in RDS
     for logRecord in logRecords:
@@ -76,32 +75,6 @@ def GetComparisonResultsFromLog(logFilePath: str, rdsRecordStrings: list):
     print('{} missing records were found.'.format(len(missingEventsFromLog)))
 
     return missingEventsFromLog
-
-
-def ArbitraryResults(sn: str, ga: str):
-    return [
-        {
-            'EventDeviceType': ga,
-            'EventDeviceSerialNumber': sn,
-            'EventKey': 'E1',
-            'EventValue': 'V1',
-            'CreationTime': '12/10/2020 10:37:00'
-        },
-        {
-            'EventDeviceType': ga,
-            'EventDeviceSerialNumber': sn,
-            'EventKey': 'E2',
-            'EventValue': 'V2',
-            'CreationTime': '12/10/2020 10:37:01'
-        },
-        {
-            'EventDeviceType': ga,
-            'EventDeviceSerialNumber': sn,
-            'EventKey': 'E3',
-            'EventValue': 'V3',
-            'CreationTime': '12/10/2020 10:37:02'
-        },
-    ]
 
 
 def CollectComparisonResults(config: object, sn: str, ga: str,
@@ -113,20 +86,19 @@ def CollectComparisonResults(config: object, sn: str, ga: str,
 
     rdsSim = True if config['RDS_SIM'].lower() == 'true' else False
     if rdsSim:
-        return ArbitraryResults(sn, ga)
+        return []
 
     # Retrieve from RDS all device events
     print('Retrieve from RDS all event entries related to the device')
     rdsEntries = GetDeviceEvents(sn, ga, config)
     print('Entries in RDS: {}'.format(len(rdsEntries)))
     rdsRecords = [ConvertEntryToRecord(entry) for entry in rdsEntries]
-    print('-------', rdsRecords[0], '---------')
+
     for i in range(len(rdsRecords)):
         rdsRecords[i].entryTimeStamp = ConvertDatetime(
             rdsRecords[i].entryTimeStamp, '%Y-%m-%dT%H:%M:%S',
             '%Y-%m-%d %H:%M:%S')
     rdsRecordStrings = [str(rdsRecord) for rdsRecord in rdsRecords]
-    print('-------', rdsRecordStrings[0], '---------')
 
     logsFolderPath = os.path.join(deviceFoldersDir, deviceName, 'Client',
                                   'Debug_x64', 'Logs', '1.0.0.0')
@@ -143,12 +115,15 @@ def CollectComparisonResults(config: object, sn: str, ga: str,
 
 
 def SendComparisonResults(tesCenterUrl: str, comparisonResults: list):
-    response = requests.post(
-        url='{}/getComparisonResults'.format(tesCenterUrl),
-        json=comparisonResults)
-    if not response.ok:
-        print('Error: request failed. status code: {}'.format(
-            response.status_code))
+    try:
+        response = requests.post(
+            url='{}/getComparisonResults'.format(tesCenterUrl),
+            json=comparisonResults)
+        if not response.ok:
+            print('Error: request failed. status code: {}'.format(
+                response.status_code))
+    except Exception as ex:
+        print('Error: test center is not reachable {}'.format(ex))
 
 
 if __name__ == "__main__":
