@@ -1,3 +1,52 @@
+def SendRequestLogin(config: object):
+    """
+    Sends to api host login request and return access token
+    """
+    loginHost = config['API_LOGIN_HOST']
+    loginData = {"email": config['API_USER'], "password": config['API_PASS']}
+    response = requests.post(url=loginHost,
+                             headers={'Content-Type': 'application/json'},
+                             data=json.dumps(loginData))
+    if not response.ok:
+        print('Request failed. status code: {} reason: {}'.format(
+            response.status_code, response.reason))
+        return None
+    jsonObj = response.json()
+    return jsonObj['accessToken']
+
+
+def GetPreviousDate():
+    fromTime = datetime.datetime.now() - timedelta(days=1)
+    return fromTime.strftime('%Y-%m-%d')
+
+
+def GetDeviceEvents(sn: str, ga: str, config: object):
+    accessToken = SendRequestLogin(config)
+    if not accessToken:
+        print('Error: Login failed.')
+        raise Exception('Cannot login portal')
+    print('Login success.')
+    apiEventHost = config['API_EVENT']
+    nowDate = datetime.datetime.now().strftime("%Y-%m-%d")
+    prevDate = GetPreviousDate()
+    prevDate = '2020-12-24'
+    apiEventUrl = apiEventHost + '?deviceSerialNumber={}&deviceType={}&from={}T08%3A00%3A00.015Z&to={}T08%3A00%3A00.015Z'.format(
+        sn, ga, prevDate, nowDate)
+
+    print('Url: {}'.format(apiEventUrl))
+
+    response = requests.get(url=apiEventUrl,
+                            headers={
+                                'Content-Type': 'application/json',
+                                'Authorization':
+                                'Bearer {}'.format(accessToken)
+                            })
+    print('Response: ', response.status_code, response.reason)
+    jsonData = response.json()
+    eventObjects = jsonData['data']
+    return eventObjects
+
+
 def GetComparisonResultsFromLog(logFilePath: str, rdsRecordStrings: list):
     """
     Return comparison results from a log file
@@ -6,13 +55,19 @@ def GetComparisonResultsFromLog(logFilePath: str, rdsRecordStrings: list):
 
     # Retrieve log events from log file
     print('Load records from log file: {}'.format(logFilePath))
-    logEntries = ReadLogFile(logFilePath)
+    columns = [
+        'deviceType', 'deviceSerialNumber', 'entryKey', 'entryValue',
+        'entryTimestamp'
+    ]
+    logEntries = ReadLogFile(logFilePath, columns)
     for i in range(len(logEntries)):
-        logEntries[i]['entryTimeStamp'] = ConvertDatetime(
-            logEntries[i]['entryTimeStamp'], '%m/%d/%Y %H:%M:%S %p',
+        logEntries[i]['entryTimestamp'] = ConvertDatetime(
+            logEntries[i]['entryTimestamp'], '%m/%d/%Y %H:%M:%S %p',
             '%Y-%m-%d %H:%M:%S')
     print('Log records: {}'.format(len(logEntries)))
     logRecords = [ConvertEntryToRecord(entry) for entry in logEntries]
+
+    print('----', logRecords[0], '-----')
 
     # Get all log events that do not exist in RDS
     for logRecord in logRecords:
@@ -56,36 +111,30 @@ def CollectComparisonResults(config: object, sn: str, ga: str,
     print('Collecting comparison results for {}'.format(deviceName))
     deviceFoldersDir = config['DEVICE_FOLDERS_DIR']
 
-    # Connect to RDS
-    host = config['RDS_HOST']
-    db = config['RDS_DB']
-    username = config['RDS_USER']
-    password = config['RDS_PASS']
     rdsSim = True if config['RDS_SIM'].lower() == 'true' else False
     if rdsSim:
         return ArbitraryResults(sn, ga)
-    dbConn = ConnectRDS(host, db, username, password)
-    if not dbConn:
-        print('Error: Could not connect to RDS.')
-        return []
 
     # Retrieve from RDS all device events
     print('Retrieve from RDS all event entries related to the device')
-    rdsEntries = GetAllDeviceEntries(dbConn, ga, sn)
+    rdsEntries = GetDeviceEvents(sn, ga, config)
     print('Entries in RDS: {}'.format(len(rdsEntries)))
     rdsRecords = [ConvertEntryToRecord(entry) for entry in rdsEntries]
+    print('-------', rdsRecords[0], '---------')
     for i in range(len(rdsRecords)):
         rdsRecords[i].entryTimeStamp = ConvertDatetime(
-            rdsRecords[i].entryTimeStamp, '%Y-%m-%d %H:%M:%S',
+            rdsRecords[i].entryTimeStamp, '%Y-%m-%dT%H:%M:%S',
             '%Y-%m-%d %H:%M:%S')
     rdsRecordStrings = [str(rdsRecord) for rdsRecord in rdsRecords]
-    DisconnectRDS(dbConn)
+    print('-------', rdsRecordStrings[0], '---------')
 
     logsFolderPath = os.path.join(deviceFoldersDir, deviceName, 'Client',
                                   'Debug_x64', 'Logs', '1.0.0.0')
     logFileNames = os.listdir(logsFolderPath)
     for logFileName in logFileNames:
         logFilePath = os.path.join(logsFolderPath, logFileName)
+        if os.path.isdir(logFilePath):
+            continue
         missingEventsFromLog = GetComparisonResultsFromLog(
             logFilePath, rdsRecordStrings)
         missingEvents.extend(missingEventsFromLog)
@@ -110,6 +159,7 @@ if __name__ == "__main__":
     import json
     import requests
     import traceback
+    from datetime import timedelta
     from utils import *
     from compare import *
 

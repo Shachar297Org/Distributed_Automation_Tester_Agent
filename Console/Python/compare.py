@@ -49,7 +49,7 @@ def ConvertEntryToRecord(entry: object):
     serialNum = entry['deviceSerialNumber']
     entryKey = entry['entryKey']
     entryValue = entry['entryValue']
-    entryTimeStamp = str(entry['entryTimeStamp'])
+    entryTimeStamp = str(entry['entryTimestamp'])
     return Record(deviceType, serialNum, entryKey, entryValue, entryTimeStamp)
 
 
@@ -251,14 +251,4 @@ def TestRetrieveDataFromRDS():
 
 
 if __name__ == "__main__":
-    config = ReadConfigFile('_Config/config.ini')
-    host = config['RDSConnection']['host']
-    db = config['RDSConnection']['db']
-    username = config['RDSConnection']['username']
-    password = config['RDSConnection']['password']
-    logfile = config['log']['logfiles']
-
-    TestDatabase()
-    # TestDataRetrive()
-    # TestParseLogFileToRecords(logfile)
-    # TestRetrieveDataFromRDS()
+    pass
