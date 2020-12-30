@@ -19,7 +19,6 @@ namespace Console
     {
         // Every minute the agent checks if a device client process finished running
         System.Timers.Timer _getProcessTimer = new System.Timers.Timer(new TimeSpan(0, 1, 0).TotalMilliseconds);
-        //Logger _logger;
 
         /// <summary>
         /// Create agent base directory and send connect command to test center
@@ -27,10 +26,9 @@ namespace Console
         public async Task<bool> Init()
         {
             Utils.LoadConfig();
-            //_logger = new Logger(Settings.Get("LOG_FILE_PATH"));
             try
             {
-                //int runningTimerSec = int.Parse(Settings.Get("DEVICE_RUNNING_TIMER_IN_SEC"));
+                Utils.WriteLog($"-----AGENT INIT BEGIN----", "info");
                 string internalIP = Utils.GetInternalIPAddress();
                 Utils.WriteLog($"Agent internal IP: {internalIP}", "info");
                 string agentUrl = internalIP + ":" + Settings.Get("AGENT_PORT");
@@ -47,6 +45,10 @@ namespace Console
                 Utils.WriteLog($"Error in init: {ex.Message} {ex.StackTrace}", "error");
                 return false;
             }
+            finally
+            {
+                Utils.WriteLog($"-----AGENT INIT END----", "info");
+            }
         }
 
         /// <summary>
@@ -56,8 +58,8 @@ namespace Console
         public bool SendDevices(string jsonContent)
         {
             Utils.LoadConfig();
-            //_logger = new Logger(Settings.Get("LOG_FILE_PATH"));
 
+            Utils.WriteLog("-----AGENT DEVICE FOLDER CREATION STAGE BEGIN-----", "info");
             Utils.WriteLog("Received device list", "info");
             try {
                 Utils.WriteLog($"Json content: {jsonContent}", "info");
@@ -75,6 +77,10 @@ namespace Console
                 Utils.WriteLog($"Error in sendDevices: {ex.Message} {ex.StackTrace}", "error");
                 return false;
             }
+            finally
+            {
+                Utils.WriteLog("-----AGENT DEVICE FOLDER CREATION STAGE END-----", "info");
+            }
         }
     
 
@@ -85,9 +91,9 @@ namespace Console
         public bool SendScript(string jsonContent)
         {
             Utils.LoadConfig();
-            //_logger = new Logger(Settings.Get("LOG_FILE_PATH"));
             try
             {
+                Utils.WriteLog($"-----AGENT RUNINNG DEVICES STAGE BEGIN-----", "info");
                 ScriptFile scriptFileObj = JsonConvert.DeserializeObject<ScriptFile>(jsonContent);
                 Utils.WriteToFile(Settings.Get("SCRIPT_PATH"), scriptFileObj.Content, false);
                 int maxDevicesToCreate = int.Parse(Settings.Get("MAX_DEVICES_TO_CREATE"));
@@ -102,6 +108,10 @@ namespace Console
             {
                 Utils.WriteLog($"Error in sendScript: {ex.Message} {ex.StackTrace}", "error");
                 return false;
+            }
+            finally
+            {
+                Utils.WriteLog($"-----AGENT RUNINNG DEVICES STAGE END-----", "info");
             }
         }  
 
@@ -133,6 +143,8 @@ namespace Console
         {
             try
             {
+                Utils.WriteLog($"-----CHECK DEVICE FINISH BEGIN-----", "info");
+
                 List<LumXProcess> processList = Utils.ReadProcessesFromFile(Settings.Get("PROCESSES_PATH"));
                 List<LumXProcess> processesToRemove = new List<LumXProcess>();
                 foreach (var processObj in processList)
@@ -174,6 +186,8 @@ namespace Console
                 string processesJsonFile = Settings.Get("PROCESSES_PATH");
                 string processesContent = JsonConvert.SerializeObject(processList);
                 Utils.WriteToFile(processesJsonFile, processesContent, append: false);
+
+                Utils.WriteLog($"-----CHECK DEVICE FINISH END-----", "info");
 
                 return processList.Count > 0;
             }
@@ -241,6 +255,7 @@ namespace Console
             if (CheckDeviceClientFinished())
             {
                 Utils.WriteLog($"There are still running devices.", "info");
+                _getProcessTimer.Interval = 60 * 1000;
                 _getProcessTimer.Start();
                 Utils.WriteLog($"---Process timer started---", "info");
             }
