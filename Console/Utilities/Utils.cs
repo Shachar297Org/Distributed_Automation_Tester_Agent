@@ -82,34 +82,31 @@ namespace Console.Utilities
             start.RedirectStandardOutput = true;
             start.RedirectStandardError = true;
 
-            await Task.Run(() =>
+            int returnCode = 0;
+            using (Process process = Process.Start(start))
             {
-                int returnCode = 0;
-                using (Process process = Process.Start(start))
+                await Task.Run(() => process.WaitForExit());
+                using (StreamReader reader = process.StandardOutput)
                 {
-                    process.WaitForExit();
-                    using (StreamReader reader = process.StandardOutput)
+                    string output = reader.ReadToEnd();
+                    if (outputFile != null)
                     {
-                        string output = reader.ReadToEnd();
-                        if (outputFile != null)
-                        {
-                            using (StreamWriter writer = new StreamWriter(outputFile, append: true))
-                            {
-                                writer.Write(output);
-                            }
-                        }
-                    }
-                    using (StreamReader reader = process.StandardError)
-                    {
-                        string output = reader.ReadToEnd();
                         using (StreamWriter writer = new StreamWriter(outputFile, append: true))
                         {
                             writer.Write(output);
                         }
                     }
-                    returnCode = process.ExitCode;
                 }
-            });
+                using (StreamReader reader = process.StandardError)
+                {
+                    string output = reader.ReadToEnd();
+                    using (StreamWriter writer = new StreamWriter(outputFile, append: true))
+                    {
+                        writer.Write(output);
+                    }
+                }
+                returnCode = process.ExitCode;
+            }          
             
         }
 
