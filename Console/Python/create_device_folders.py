@@ -1,14 +1,17 @@
+
+
+
 def CreateDeviceFolders(devicesToCreateRecords: list, config: object):
     """
     Create device folders
     """
-    # Filter devices to create
+    # Create device dictionaries list
     deviceRecords = []
     for device in devicesToCreateRecords:
         sn = device['DeviceSerialNumber']
         gn = device['DeviceType']
         deviceRecords.append({
-            'deviceName': '_'.join([sn, gn]),
+            'DeviceName': '_'.join([sn, gn]),
             'DeviceType': gn,
             'DeviceSerialNumber': sn
         })
@@ -18,27 +21,21 @@ def CreateDeviceFolders(devicesToCreateRecords: list, config: object):
     if not os.path.exists(deviceFoldersBaseDir):
         os.makedirs(deviceFoldersBaseDir)
 
-    print('Devices to create: {}/{}'.format(len(deviceRecords),
-                                            len(devicesToCreateRecords)))
+    print('Devices to create: {}'.format(len(deviceRecords)))
+
     T1 = time.time()
     for deviceRecord in deviceRecords:
-        try:
-            t1 = time.time()
-            print('Creating env folder for {} ...'.format(deviceRecord))
-            CreateDeviceFolder(deviceRecord, config)
-            t2 = time.time()
-            dt = math.ceil(t2 - t1)
-            print('Device env {} was created successfully. Time: {}'.format(
-                deviceRecord, dt))
-        except Exception as ex:
-            print('Error: {} {}'.format(ex, print))
-            traceback.print_exc()
-            return False
-    T2 = time.time()
-    DT = T2 - T1
-    print('Total time: {}'.format(DT))
+        t1 = time.time()
+        print('Creating env folder for {} ...'.format(deviceRecord))
+        CreateDeviceFolder(deviceRecord, config)
+        t2 = time.time()
+        dt = math.ceil(t2 - t1)
+        print('Device env {} was created successfully. Time: {} sec'.format(
+            deviceRecord, dt))
 
-    return True
+    T2 = time.time()
+    DT = math.ceil(T2 - T1)
+    print('Total time: {} sec'.format(DT))
 
 
 if __name__ == "__main__":
@@ -72,8 +69,12 @@ if __name__ == "__main__":
 
         CreateDeviceFolders(devicesToCreateRecords, config)
         print('-----success-----')
+        exit(0)
 
     except Exception as ex:
         print('Error: {}'.format(ex))
+        traceback.print_exc()
         print('-----fail-----')
         exit(1)
+
+    exit(0)

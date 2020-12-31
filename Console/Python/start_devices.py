@@ -1,4 +1,3 @@
-
 def CopyScriptFileToDeviceFolders(devicesToCreate, scriptFilePath, config):
     """
     Copy script file to every device folder
@@ -56,7 +55,7 @@ def ModifyActivationScripts(devicesToCreate, scriptFilePath, config):
     time.sleep(3)
 
 
-def StartServer(deviceRecord, config, servers):
+def StartServer(deviceRecord, config, servers, index):
     """
     Start server of a device
     """
@@ -67,7 +66,7 @@ def StartServer(deviceRecord, config, servers):
     deviceFolder = os.path.join(prefix, deviceName)
     serverExeName = config['SERVER_EXE_NAME']
     serverPath = os.path.join(deviceFolder, 'Server', 'Debug', serverExeName)
-    process = RunExecutable(serverPath, args=[], shell=False)
+    process = RunExecutable(serverPath, args=[str(index)], shell=False)
     print('{} server process with pid {} started'.format(
         serverPath, process.pid))
     if process:
@@ -79,7 +78,7 @@ def StartServer(deviceRecord, config, servers):
         })
 
 
-def StartClient(deviceRecord, scriptFilePath, config, clients):
+def StartClient(deviceRecord, scriptFilePath, config, clients, index):
     """
     Start client of a device
     """
@@ -118,8 +117,8 @@ def StartAllServers(devicesToCreate, config, servers):
     """
     Start all device servers
     """
-    for deviceRecord in devicesToCreate:
-        StartServer(deviceRecord, config, servers)
+    for index, deviceRecord in enumerate(devicesToCreate):
+        StartServer(deviceRecord, config, servers, index)
     #    time.sleep(0.5)
 
 
@@ -127,8 +126,8 @@ def StartAllClients(devicesToCreate, scriptFilePath, config, clients):
     """
     Start all device clients
     """
-    for deviceRecord in devicesToCreate:
-        StartClient(deviceRecord, scriptFilePath, config, clients)
+    for index, deviceRecord in enumerate(devicesToCreate):
+        StartClient(deviceRecord, scriptFilePath, config, clients, index)
     #    time.sleep(0.5)
 
 
@@ -140,6 +139,7 @@ if __name__ == "__main__":
     import json
     import time
     import re
+    import traceback
     from utils import *
     from create_device_env import *
 
@@ -157,7 +157,6 @@ if __name__ == "__main__":
 
         deviceToCreateFile = config['DEVICES_TO_CREATE_PATH']
         scriptFilePath = config['SCRIPT_PATH']
-        maxDevicesToStart = int(config['MAX_DEVICES_TO_CREATE'])
         processesPath = config['PROCESSES_PATH']
 
         if (not os.path.exists(deviceToCreateFile)):
@@ -169,7 +168,7 @@ if __name__ == "__main__":
             exit(2)
 
         jsonContent = ReadFileContent(deviceToCreateFile)
-        devicesToCreate = json.loads(jsonContent)[:maxDevicesToStart]
+        devicesToCreate = json.loads(jsonContent)
 
         CopyScriptFileToDeviceFolders(devicesToCreate, scriptFilePath, config)
 
@@ -191,5 +190,6 @@ if __name__ == "__main__":
 
     except Exception as ex:
         print('Error: {}'.format(ex))
+        traceback.print_exc()
         print('-----fail-----')
         exit(1)

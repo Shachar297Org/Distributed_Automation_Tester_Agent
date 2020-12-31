@@ -55,37 +55,63 @@ namespace Console
         /// Get device list from test center, create device folders and when finished send agentReady
         /// </summary>
         /// <param name="jsonContent">json containing device list</param>
-        public bool SendDevices(string jsonContent)
+        public void SendDevices(string jsonContent)
         {
-            Utils.LoadConfig();
-
-            Utils.WriteLog("-----AGENT DEVICE FOLDER CREATION STAGE BEGIN-----", "info");
-            Utils.WriteLog("Received device list", "info");
-            //Task t1 = Task.Factory.StartNew(()=>
-            //{
-
-            //}
-            //);
-            try {
-                Utils.WriteLog($"Json content: {jsonContent}", "info");
-                List<Device> devicesToCreate = JsonConvert.DeserializeObject<List<Device>>(jsonContent);
-                Utils.WriteDeviceListToFile(devicesToCreate, Settings.Get("DEVICES_TO_CREATE_PATH"));
-                Utils.WriteLog("Start creating device folders", "info");
-                Utils.RunCommand(Settings.Get("PYTHON"), "create_device_folders.py", $"{Settings.Get("CONFIG_FILE")}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
-                string cwd = Directory.GetCurrentDirectory();
-                Utils.WriteLog($"Send agentReady to test center in {Settings.Get("TEST_CENTER_URL")}", "info");
-                Utils.RunCommand("curl", Settings.Get("TEST_CENTER_URL") + $"/agentReady?port={Settings.Get("AGENT_PORT")}", "", cwd, Settings.Get("OUTPUT"));
-                return true;
-            }
-            catch (Exception ex)
+           
+            Task t1 = Task.Factory.StartNew(() =>
             {
-                Utils.WriteLog($"Error in sendDevices: {ex.Message} {ex.StackTrace}", "error");
-                return false;
+                Utils.LoadConfig();
+
+                Utils.WriteLog("-----AGENT DEVICE FOLDER CREATION STAGE BEGIN-----", "info");
+                Utils.WriteLog("Received device list", "info");
+                try
+                {
+                    Utils.WriteLog($"Json content: {jsonContent}", "info");
+                    List<Device> devicesToCreate = JsonConvert.DeserializeObject<List<Device>>(jsonContent);
+                    Utils.WriteDeviceListToFile(devicesToCreate, Settings.Get("DEVICES_TO_CREATE_PATH"));
+                    Utils.WriteLog("Start creating device folders", "info");
+                    
+                    if (devicesToCreate.Count > 0)
+                    {
+                        foreach (Device device in devicesToCreate)
+                        {
+                            Task t = Task.Factory.StartNew(() =>
+                            {
+                                string deviceName = device.DeviceSerialNumber + "_" + device.DeviceType;
+                                Utils.RunCommand(Settings.Get("PYTHON"), "create_device_folder.py", $"{Settings.Get("CONFIG_FILE")} {deviceName}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
+                            });
+                           
+                        } 
+                    }
+                Thread.Sleep((int)new TimeSpan(0, 3, 0).TotalMilliseconds);
+                  //  Utils.RunCommand(Settings.Get("PYTHON"), "create_device_folders.py", $"{Settings.Get("CONFIG_FILE")}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
+
+                    string cwd = Directory.GetCurrentDirectory();
+                    Utils.WriteLog($"Send agentReady to test center in {Settings.Get("TEST_CENTER_URL")}", "info");
+                    Utils.RunCommand("curl", Settings.Get("TEST_CENTER_URL") + $"/agentReady?port={Settings.Get("AGENT_PORT")}", "", cwd, Settings.Get("OUTPUT"));
+                   //return true;
+                }
+                catch (Exception ex)
+                {
+                    Utils.WriteLog($"Error in sendDevices: {ex.Message} {ex.StackTrace}", "error");
+                   // return false;
+                }
+                finally
+                {
+                    Utils.WriteLog("-----AGENT DEVICE FOLDER CREATION STAGE END-----", "info");
+                }
             }
-            finally
+            );
+            
+            if(t1.Wait(new TimeSpan(0,4,0)))
             {
-                Utils.WriteLog("-----AGENT DEVICE FOLDER CREATION STAGE END-----", "info");
+                Utils.WriteLog("----task finished with in 4 min-----", "info");
             }
+            else
+            {
+                Utils.WriteLog("-----task didn't finished with in 4 min-----", "info");
+            }
+           
         }
     
 
@@ -101,7 +127,6 @@ namespace Console
                 Utils.WriteLog($"-----AGENT RUNINNG DEVICES STAGE BEGIN-----", "info");
                 ScriptFile scriptFileObj = JsonConvert.DeserializeObject<ScriptFile>(jsonContent);
                 Utils.WriteToFile(Settings.Get("SCRIPT_PATH"), scriptFileObj.Content, false);
-                int maxDevicesToCreate = int.Parse(Settings.Get("MAX_DEVICES_TO_CREATE"));
                 Utils.RunCommand(Settings.Get("PYTHON"), "start_devices.py", $"{Settings.Get("CONFIG_FILE")}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
                 Thread.Sleep(int.Parse(Settings.Get("PROCESS_UPTIME_IN_MS")));
                 _getProcessTimer.Elapsed += GetProcessTimer_Elapsed;

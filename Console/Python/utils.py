@@ -127,6 +127,7 @@ def RunExecutable(exeFile: str, args: list, shell: bool):
                 creationflags=subprocess.DETACHED_PROCESS)
         return process
     except Exception as ex:
+        print('Error in running executable: {}'.format(ex))
         return None
 
 

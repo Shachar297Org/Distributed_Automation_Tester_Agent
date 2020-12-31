@@ -93,7 +93,7 @@ def CreateDeviceFolder(device: dict, config: object):
     opensslPath = config['OPENSSL_PATH']
     activationScriptFilePath = config['SCRIPT_PATH']
 
-    deviceName = device['deviceName']
+    deviceName = device['DeviceName']
     deviceType = device['DeviceType']
     serialNumber = device['DeviceSerialNumber']
 

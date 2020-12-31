@@ -7,7 +7,7 @@ namespace Shared
     {
         Task<bool> Init();
 
-        bool SendDevices(string jsonContent);
+        void SendDevices(string jsonContent);
 
         bool SendScript(string jsonContent);
     }
