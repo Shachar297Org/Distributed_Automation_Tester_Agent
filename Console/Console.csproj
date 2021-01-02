@@ -113,6 +113,7 @@
     <Content Include="Python\agent_app.py" />
     <Content Include="Python\collect_script_results.py" />
     <Content Include="Python\compare.py" />
+    <Content Include="Python\compare_events.py" />
     <Content Include="Python\create_device_env.py" />
     <Content Include="Python\create_device_folders.py" />
     <Content Include="Python\logger.py" />
