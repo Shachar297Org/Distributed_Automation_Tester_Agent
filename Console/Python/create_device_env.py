@@ -104,12 +104,14 @@ def CreateDeviceFolder(device: dict, config: object):
     if not os.path.exists(deviceFolder):
         os.mkdir(deviceFolder)
 
-    # if not os.path.exists(os.path.join(deviceFolder, 'Client')):
-    CopyDirectory(clientApp, os.path.join(deviceFolder, 'Client'))
+    clientFolderName = config['CLIENT_EXE_NAME'].split('.')[0]
+
+    # if not os.path.exists(os.path.join(deviceFolder, clientFolderName)):
+    CopyDirectory(clientApp, os.path.join(deviceFolder, clientFolderName))
 
     UpdateHaspFile(
-        os.path.join(deviceFolder, 'Client', 'Debug_x64', 'HASP_SIMUL.ini'),
-        device)
+        os.path.join(deviceFolder, clientFolderName, 'Debug_x64',
+                     'HASP_SIMUL.ini'), device)
 
     # Create server folder
     # if not os.path.exists(os.path.join(deviceFolder, 'Server')):

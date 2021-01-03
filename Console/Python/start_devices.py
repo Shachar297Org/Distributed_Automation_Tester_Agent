@@ -66,6 +66,7 @@ def StartServer(deviceRecord, config, servers, index):
     deviceFolder = os.path.join(prefix, deviceName)
     serverExeName = config['SERVER_EXE_NAME']
     serverPath = os.path.join(deviceFolder, 'Server', 'Debug', serverExeName)
+    print('Running server {}'.format(deviceName))
     process = RunExecutable(serverPath, args=[str(index)], shell=False)
     print('{} server process with pid {} started'.format(
         serverPath, process.pid))
@@ -89,8 +90,9 @@ def StartClient(deviceRecord, scriptFilePath, config, clients, index):
     deviceFolder = os.path.join(prefix, deviceName)
 
     clientExeName = config['CLIENT_EXE_NAME']
+    clientFolderName = clientExeName.split('.')[0]
 
-    clientPath = os.path.join(deviceFolder, 'Client', 'Debug_x64',
+    clientPath = os.path.join(deviceFolder, clientFolderName, 'Debug_x64',
                               clientExeName)
 
     activationScriptPath = os.path.join(deviceFolder, 'Scripts',
@@ -99,9 +101,12 @@ def StartClient(deviceRecord, scriptFilePath, config, clients, index):
 
     print('Client exe path: {}'.format(clientPath))
 
-    process = RunExecutable(clientPath,
-                            args=[activationScriptPath, deviceName],
-                            shell=False)
+    print('Running client {}'.format(deviceName))
+    process = RunExecutable(
+        clientPath,
+        args=[activationScriptPath, deviceName,
+              str(index)],
+        shell=False)
     print('{} client process with pid {} started'.format(
         clientPath, process.pid))
     if process:
@@ -119,7 +124,7 @@ def StartAllServers(devicesToCreate, config, servers):
     """
     for index, deviceRecord in enumerate(devicesToCreate):
         StartServer(deviceRecord, config, servers, index)
-    #    time.sleep(0.5)
+        time.sleep(0.5)
 
 
 def StartAllClients(devicesToCreate, scriptFilePath, config, clients):
@@ -128,7 +133,7 @@ def StartAllClients(devicesToCreate, scriptFilePath, config, clients):
     """
     for index, deviceRecord in enumerate(devicesToCreate):
         StartClient(deviceRecord, scriptFilePath, config, clients, index)
-    #    time.sleep(0.5)
+        time.sleep(0.5)
 
 
 if __name__ == "__main__":
