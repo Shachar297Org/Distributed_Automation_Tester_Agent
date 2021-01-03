@@ -100,8 +100,10 @@ def CollectComparisonResults(config: object, sn: str, ga: str,
             '%Y-%m-%d %H:%M:%S')
     rdsRecordStrings = [str(rdsRecord) for rdsRecord in rdsRecords]
 
-    logsFolderPath = os.path.join(deviceFoldersDir, deviceName, 'Client',
-                                  'Debug_x64', 'Logs', '1.0.0.0')
+    clientFolderName = config['CLIENT_EXE_NAME'].split('.')[0]
+    logsFolderPath = os.path.join(deviceFoldersDir, deviceName,
+                                  clientFolderName, 'Debug_x64', 'Logs',
+                                  '1.0.0.0')
     logFileNames = os.listdir(logsFolderPath)
     for logFileName in logFileNames:
         logFilePath = os.path.join(logsFolderPath, logFileName)

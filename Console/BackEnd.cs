@@ -142,46 +142,36 @@ namespace Console
                     ScriptFile scriptFileObj = JsonConvert.DeserializeObject<ScriptFile>(jsonContent);
                     Utils.WriteToFile(Settings.Get("SCRIPT_PATH"), scriptFileObj.Content, false);
                     List<Device> devicesToCreate = Utils.ReadDevicesFromFile(Settings.Get("DEVICES_TO_CREATE_PATH"));
-                    //Utils.RunCommand(Settings.Get("PYTHON"), "start_devices.py", $"{Settings.Get("CONFIG_FILE")}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
-
 
                     if (devicesToCreate.Count > 0)
                     {
-                        int deviceIndex = 0;
-                        foreach (Device device in devicesToCreate)
+                        for (int deviceIndex = 0; deviceIndex < devicesToCreate.Count; deviceIndex++)
                         {
-                            Task t = Task.Factory.StartNew(() =>
-                            {
-                                string deviceName = device.DeviceSerialNumber + "_" + device.DeviceType;
-                                Utils.RunCommand(Settings.Get("PYTHON"), "start_device.py", $"{Settings.Get("CONFIG_FILE")} {deviceName} {deviceIndex}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
-                            });
-                            deviceIndex++;
+                            Device device = devicesToCreate[deviceIndex];
+                            string deviceName = device.DeviceSerialNumber + "_" + device.DeviceType;
+                            Utils.RunCommand(Settings.Get("PYTHON"), "start_device.py", $"{Settings.Get("CONFIG_FILE")} {deviceName} {deviceIndex}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
                         }
                     }
-                    Thread.Sleep((int)new TimeSpan(0, 1, 0).TotalMilliseconds);              
-
-                    _getProcessTimer.Elapsed += GetProcessTimer_Elapsed;
-                    _getProcessTimer.Start();
-                    return true;
                 }
                 catch (Exception ex)
                 {
                     Utils.WriteLog($"Error in sendScript: {ex.Message} {ex.StackTrace}", "error");
-                    return false;
                 }
                 finally
                 {
                     Utils.WriteLog($"-----AGENT RUNINNG DEVICES STAGE END-----", "info");
                 }
             });
-            if (t1.Wait(new TimeSpan(0, 1, 0)))
+            if (t1.Wait(new TimeSpan(0, 2, 0)))
             {
-                Utils.WriteLog("----task finished with in 1 min-----", "info");
-                ReadDeviceProcesses();    
+                Utils.WriteLog("----task finished with in 2 min-----", "info");
+                ReadDeviceProcesses();
+                _getProcessTimer.Elapsed += GetProcessTimer_Elapsed;
+                _getProcessTimer.Start();
             }
             else
             {
-                Utils.WriteLog("-----task didn't finished with in 1 min-----", "info");
+                Utils.WriteLog("-----task didn't finished with in 2 min-----", "info");
             }
             return true;
         }  
@@ -279,7 +269,8 @@ namespace Console
             Utils.LoadConfig();
             string deviceName = string.Join("_", new string[] { sn, ga });
             string deviceFoldersDir = Settings.Get("DEVICE_FOLDERS_DIR");
-            string deviceClientLogFolder = Path.Combine(deviceFoldersDir, deviceName, "Client", "Debug_x64", "Logs");
+            string clientFolderName = Settings.Get("CLIENT_EXE_NAME").Split('.')[0];
+            string deviceClientLogFolder = Path.Combine(deviceFoldersDir, deviceName, clientFolderName, "Debug_x64", "Logs");
             string logFile = Path.Combine(deviceClientLogFolder, "log.txt");
             Utils.WriteLog($"Client log file path: {logFile}", "info");
             string logContent = Utils.ReadFileContent(logFile);

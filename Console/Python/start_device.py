@@ -13,12 +13,12 @@ def StartServer(deviceName, deviceIndex, config):
     print('{} server process with pid {} started'.format(
         serverPath, process.pid))
     if process:
-        return [{
+        return {
             'Pid': process.pid,
             'DeviceType': ga,
             'DeviceSerialNumber': sn,
             'Type': 'Server'
-        }]
+        }
 
 
 def StartClient(deviceName, scriptFilePath, deviceIndex, config):
@@ -45,12 +45,12 @@ def StartClient(deviceName, scriptFilePath, deviceIndex, config):
     print('{} client process with pid {} started'.format(
         clientPath, process.pid))
     if process:
-        return [{
+        return {
             'Pid': process.pid,
             'DeviceType': ga,
             'DeviceSerialNumber': sn,
             'Type': 'Client'
-        }]
+        }
 
 
 if __name__ == "__main__":
@@ -95,7 +95,7 @@ if __name__ == "__main__":
                                     config)
 
         print('Write server and client processes to json file')
-        processes = [serverProcess + clientProcess]
+        processes = [serverProcess, clientProcess]
         jsonString = json.dumps(processes)
 
         processesPath = os.path.join(processesDirPath,

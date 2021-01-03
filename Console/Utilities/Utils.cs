@@ -173,7 +173,7 @@ namespace Console.Utilities
                     processList = JsonConvert.DeserializeObject<List<LumXProcess>>(json);
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 processList = null;
             }
