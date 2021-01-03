@@ -70,8 +70,8 @@ def SendScript():
     # agent.ModifyActivationScripts()
 
     agent.WriteLog('Start devices (servers and clients)', 'info')
-    # agent.StartAllServers()
-    # agent.StartAllClients()
+    agent.StartAllServers()
+    agent.StartAllClients()
 
     # todo: Check server and client logs, check activation results and report to test center
 

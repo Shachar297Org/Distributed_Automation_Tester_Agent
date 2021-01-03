@@ -49,6 +49,7 @@ def ConvertDatetimeFromAMPMTo24(datetimeStr: str, fromFormat: str):
         dt = datetime.datetime.strptime(datetimeStr, fromFormat)
         hour = dt.hour
         hour += 12
+        hour = 0 if hour == 24 else hour
         dt = dt.replace(hour=hour)
         return dt.strftime('%Y-%m-%d %H:%M:%S')
     else:

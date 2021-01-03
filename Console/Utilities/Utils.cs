@@ -13,11 +13,14 @@ using System.Configuration;
 using System.Collections.Specialized;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 
 namespace Console.Utilities
 {
     public static class Utils
     {
+        private static ReaderWriterLockSlim _readWriteLock = new ReaderWriterLockSlim();
+
         /// <summary>
         /// Run Windows command in background and wait until it finishes
         /// </summary>
@@ -45,19 +48,13 @@ namespace Console.Utilities
                     string output = reader.ReadToEnd();
                     if (outputFile != null)
                     {
-                        using (StreamWriter writer = new StreamWriter(outputFile, append: true))
-                        {
-                            writer.Write(output);
-                        }
+                        WriteToFile(outputFile, output, append: true);
                     }
                 }
                 using (StreamReader reader = process.StandardError)
                 {
                     string output = reader.ReadToEnd();
-                    using (StreamWriter writer = new StreamWriter(outputFile, append: true))
-                    {
-                        writer.Write(output);
-                    }
+                    WriteToFile(outputFile, output, append: true);
                 }
                 returnCode = process.ExitCode;
             }
@@ -91,19 +88,13 @@ namespace Console.Utilities
                     string output = reader.ReadToEnd();
                     if (outputFile != null)
                     {
-                        using (StreamWriter writer = new StreamWriter(outputFile, append: true))
-                        {
-                            writer.Write(output);
-                        }
+                        WriteToFile(outputFile, output, append: true);
                     }
                 }
                 using (StreamReader reader = process.StandardError)
                 {
                     string output = reader.ReadToEnd();
-                    using (StreamWriter writer = new StreamWriter(outputFile, append: true))
-                    {
-                        writer.Write(output);
-                    }
+                    WriteToFile(outputFile, output, append: true);
                 }
                 returnCode = process.ExitCode;
             }          
@@ -231,12 +222,21 @@ namespace Console.Utilities
         /// <param name="append">append to file or not</param>
         public static void WriteToFile(string filePath, string content, bool append)
         {
-            using (StreamWriter writer = new StreamWriter(filePath, append))
+            _readWriteLock.EnterWriteLock();
+            try
             {
-                writer.Write(content);
+                using (StreamWriter writer = new StreamWriter(filePath, append))
+                {
+                    writer.Write(content);
+                }
             }
-        }
+            finally
+            {
+                _readWriteLock.ExitWriteLock();
+            }
 
+        }
+       
         /// <summary>
         /// Get internal IP address of the host
         /// </summary>
@@ -290,5 +290,6 @@ namespace Console.Utilities
                 writer.WriteLine($"{nowTime} [{level.ToUpper()}] : {msg}");
             }
         }
+
     }
 }
