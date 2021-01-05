@@ -9,7 +9,7 @@ namespace Main
         public Event(string ga, string sn, string ekey, string evalue, DateTime time)
         {
             EventDeviceType = ga;
-            EventSerialNumber = sn;
+            EventDeviceSerialNumber = sn;
             EventKey = ekey;
             EventValue = evalue;
             CreationTime = time;
@@ -17,7 +17,7 @@ namespace Main
 
         public string EventDeviceType { get; set; }
 
-        public string EventSerialNumber { get; set; }
+        public string EventDeviceSerialNumber { get; set; }
 
         public string EventKey { get; set; }
 
