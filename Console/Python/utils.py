@@ -34,17 +34,22 @@ def GenerateNowTime():
     return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 
-def ConvertDatetime(datetimeStr: str, fromFormat: str, toFormat: str):
+def ConvertSQLDatetime(datetimeStr: str):
     """
-    Convert datetime from one format to another
+    Convert SQL datetime to regular datetime
     """
-    dt = datetime.datetime.strptime(datetimeStr, fromFormat)
-    return dt.strftime(toFormat)
+    dt = None
+    try:
+        dt = datetime.datetime.strptime(datetimeStr, '%Y-%m-%dT%H:%M:%S')
+    except ValueError:
+        dt = datetime.datetime.strptime(datetimeStr, '%Y-%m-%dT%H:%M')
+    return dt.strftime('%Y-%m-%d %H:%M:%S')
 
 
 def ConvertDatetimeFromAMPMTo24(datetimeStr: str, fromFormat: str):
     if datetimeStr.endswith('AM'):
-        return datetimeStr[:-3]
+        dt = datetime.datetime.strptime(datetimeStr, fromFormat)
+        return dt.strftime('%Y-%m-%d %H:%M:%S')
     elif datetimeStr.endswith('PM'):
         dt = datetime.datetime.strptime(datetimeStr, fromFormat)
         hour = dt.hour

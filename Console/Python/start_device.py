@@ -31,7 +31,7 @@ def StartClient(deviceName, scriptFilePath, deviceIndex, config):
     sn, ga = parts[0], parts[1]
 
     clientExeName = config['CLIENT_EXE_NAME']
-    clientFolderName = clientExeName.split('.')[0]
+    clientFolderName = config['CLIENT_PATH'].split('/')[-1]
 
     clientPath = os.path.join(deviceFolder, clientFolderName, 'Debug_x64',
                               clientExeName)
