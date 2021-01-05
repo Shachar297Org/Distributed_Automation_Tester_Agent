@@ -44,7 +44,7 @@ def ConvertDatetime(datetimeStr: str, fromFormat: str, toFormat: str):
 
 def ConvertDatetimeFromAMPMTo24(datetimeStr: str, fromFormat: str):
     if datetimeStr.endswith('AM'):
-        return datetimeStr
+        return datetimeStr[:-3]
     elif datetimeStr.endswith('PM'):
         dt = datetime.datetime.strptime(datetimeStr, fromFormat)
         hour = dt.hour

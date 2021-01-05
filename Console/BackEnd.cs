@@ -79,18 +79,22 @@ namespace Console
                             {
                                 string deviceName = device.DeviceSerialNumber + "_" + device.DeviceType;
                                 Utils.RunCommand(Settings.Get("PYTHON"), "create_device_folder.py", $"{Settings.Get("CONFIG_FILE")} {deviceName}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
-                            }); 
+                            });
+                           
                         } 
                     }
-                    Thread.Sleep((int)new TimeSpan(0, 3, 0).TotalMilliseconds);
+                Thread.Sleep((int)new TimeSpan(0, 3, 0).TotalMilliseconds);
+                  //  Utils.RunCommand(Settings.Get("PYTHON"), "create_device_folders.py", $"{Settings.Get("CONFIG_FILE")}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
 
                     string cwd = Directory.GetCurrentDirectory();
                     Utils.WriteLog($"Send agentReady to test center in {Settings.Get("TEST_CENTER_URL")}", "info");
                     Utils.RunCommand("curl", Settings.Get("TEST_CENTER_URL") + $"/agentReady?port={Settings.Get("AGENT_PORT")}", "", cwd, Settings.Get("OUTPUT"));
+                   //return true;
                 }
                 catch (Exception ex)
                 {
                     Utils.WriteLog($"Error in sendDevices: {ex.Message} {ex.StackTrace}", "error");
+                   // return false;
                 }
                 finally
                 {
@@ -99,33 +103,17 @@ namespace Console
             }
             );
             
-            if (t1.Wait(new TimeSpan(0, 4, 0)))
+            if (t1.Wait(new TimeSpan(0,4,0)))
             {
                 Utils.WriteLog("----task finished with in 4 min-----", "info");
             }
             else
             {
                 Utils.WriteLog("-----task didn't finished with in 4 min-----", "info");
-            }          
+            }
+           
         }
     
-        private void ReadDeviceProcesses()
-        {
-            string processesDirPath = Settings.Get("PROCESSES_DIR_PATH");
-            Utils.WriteLog($"Read process objects from {processesDirPath}", "info");
-            string[] deviceProcessFiles = Directory.GetFiles(processesDirPath);
-            List<LumXProcess> processList = new List<LumXProcess>();
-            foreach (var deviceProcessFile in deviceProcessFiles)
-            {
-                List<LumXProcess> deviceProcessList = Utils.ReadProcessesFromFile(deviceProcessFile);
-                processList.AddRange(deviceProcessList);
-            }
-
-            // Update processes file
-            string processesJsonFile = Settings.Get("PROCESSES_PATH");
-            string processesContent = JsonConvert.SerializeObject(processList);
-            Utils.WriteToFile(processesJsonFile, processesContent, append: false);
-        }
 
         /// <summary>
         /// Get script from test center, run device servers and clients and finally send comparison events results
@@ -133,47 +121,27 @@ namespace Console
         /// <param name="jsonContent">json containing script file</param>
         public bool SendScript(string jsonContent)
         {
-            Task t1 = Task.Factory.StartNew(() =>
+            Utils.LoadConfig();
+            try
             {
-                Utils.LoadConfig();
-                try
-                {
-                    Utils.WriteLog($"-----AGENT RUNINNG DEVICES STAGE BEGIN-----", "info");
-                    ScriptFile scriptFileObj = JsonConvert.DeserializeObject<ScriptFile>(jsonContent);
-                    Utils.WriteToFile(Settings.Get("SCRIPT_PATH"), scriptFileObj.Content, false);
-                    List<Device> devicesToCreate = Utils.ReadDevicesFromFile(Settings.Get("DEVICES_TO_CREATE_PATH"));
-
-                    if (devicesToCreate.Count > 0)
-                    {
-                        for (int deviceIndex = 0; deviceIndex < devicesToCreate.Count; deviceIndex++)
-                        {
-                            Device device = devicesToCreate[deviceIndex];
-                            string deviceName = device.DeviceSerialNumber + "_" + device.DeviceType;
-                            Utils.RunCommand(Settings.Get("PYTHON"), "start_device.py", $"{Settings.Get("CONFIG_FILE")} {deviceName} {deviceIndex}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Utils.WriteLog($"Error in sendScript: {ex.Message} {ex.StackTrace}", "error");
-                }
-                finally
-                {
-                    Utils.WriteLog($"-----AGENT RUNINNG DEVICES STAGE END-----", "info");
-                }
-            });
-            if (t1.Wait(new TimeSpan(0, 2, 0)))
-            {
-                Utils.WriteLog("----task finished with in 2 min-----", "info");
-                ReadDeviceProcesses();
+                Utils.WriteLog($"-----AGENT RUNINNG DEVICES STAGE BEGIN-----", "info");
+                ScriptFile scriptFileObj = JsonConvert.DeserializeObject<ScriptFile>(jsonContent);
+                Utils.WriteToFile(Settings.Get("SCRIPT_PATH"), scriptFileObj.Content, false);
+                Utils.RunCommand(Settings.Get("PYTHON"), "start_devices.py", $"{Settings.Get("CONFIG_FILE")}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
+                Thread.Sleep(int.Parse(Settings.Get("PROCESS_UPTIME_IN_MS")));
                 _getProcessTimer.Elapsed += GetProcessTimer_Elapsed;
                 _getProcessTimer.Start();
+                return true;
             }
-            else
+            catch (Exception ex)
             {
-                Utils.WriteLog("-----task didn't finished with in 2 min-----", "info");
+                Utils.WriteLog($"Error in sendScript: {ex.Message} {ex.StackTrace}", "error");
+                return false;
             }
-            return true;
+            finally
+            {
+                Utils.WriteLog($"-----AGENT RUNINNG DEVICES STAGE END-----", "info");
+            }
         }  
 
         /// <summary>
@@ -269,8 +237,7 @@ namespace Console
             Utils.LoadConfig();
             string deviceName = string.Join("_", new string[] { sn, ga });
             string deviceFoldersDir = Settings.Get("DEVICE_FOLDERS_DIR");
-            string clientFolderName = Settings.Get("CLIENT_EXE_NAME").Split('.')[0];
-            string deviceClientLogFolder = Path.Combine(deviceFoldersDir, deviceName, clientFolderName, "Debug_x64", "Logs");
+            string deviceClientLogFolder = Path.Combine(deviceFoldersDir, deviceName, "ClientConsole_Tester", "Debug_x64", "Logs");
             string logFile = Path.Combine(deviceClientLogFolder, "log.txt");
             Utils.WriteLog($"Client log file path: {logFile}", "info");
             string logContent = Utils.ReadFileContent(logFile);
