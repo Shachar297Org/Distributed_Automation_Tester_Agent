@@ -29,8 +29,7 @@ def GetDeviceEvents(sn: str, ga: str, config: object):
     apiEventHost = config['API_EVENT']
     nowDate = datetime.datetime.now().strftime("%Y-%m-%d")
     prevDate = GetPreviousDate()
-    prevDate = '2020-12-24'
-    apiEventUrl = apiEventHost + '?deviceSerialNumber={}&deviceType={}&from={}T08%3A00%3A00.015Z&to={}T08%3A00%3A00.015Z'.format(
+    apiEventUrl = apiEventHost + '?deviceSerialNumber={}&deviceType={}&from={}T00%3A00%3A00.015Z&to={}T23%3A59%3A59.015Z'.format(
         sn, ga, prevDate, nowDate)
 
     print('Url: {}'.format(apiEventUrl))
@@ -67,6 +66,9 @@ def GetComparisonResultsFromLog(logFilePath: str, rdsRecordStrings: list):
     print('Log records: {}'.format(len(logEntries)))
 
     logRecords = [ConvertEntryToRecord(entry) for entry in logEntries]
+    print('---------Log Records--------')
+    for logRecord in logRecords:
+        print('---', logRecord, '---')
 
     # Get all log events that do not exist in RDS
     for logRecord in logRecords:
@@ -84,10 +86,6 @@ def CollectComparisonResults(config: object, sn: str, ga: str,
     print('Collecting comparison results for {}'.format(deviceName))
     deviceFoldersDir = config['DEVICE_FOLDERS_DIR']
 
-    rdsSim = True if config['RDS_SIM'].lower() == 'true' else False
-    if rdsSim:
-        return []
-
     # Retrieve from RDS all device events
     print('Retrieve from RDS all event entries related to the device')
     rdsEntries = GetDeviceEvents(sn, ga, config)
@@ -95,12 +93,15 @@ def CollectComparisonResults(config: object, sn: str, ga: str,
     rdsRecords = [ConvertEntryToRecord(entry) for entry in rdsEntries]
 
     for i in range(len(rdsRecords)):
-        rdsRecords[i].entryTimeStamp = ConvertDatetime(
-            rdsRecords[i].entryTimeStamp, '%Y-%m-%dT%H:%M:%S',
-            '%Y-%m-%d %H:%M:%S')
+        rdsRecords[i].entryTimeStamp = ConvertSQLDatetime(
+            rdsRecords[i].entryTimeStamp)
     rdsRecordStrings = [str(rdsRecord) for rdsRecord in rdsRecords]
 
-    clientFolderName = config['CLIENT_EXE_NAME'].split('.')[0]
+    print('-----RDS Records-----')
+    for rdsRecord in rdsRecords:
+        print('---', rdsRecord, '---')
+
+    clientFolderName = config['CLIENT_PATH'].split('/')[-1]
     logsFolderPath = os.path.join(deviceFoldersDir, deviceName,
                                   clientFolderName, 'Debug_x64', 'Logs',
                                   '1.0.0.0')

@@ -18,7 +18,7 @@ namespace Console
     public class BackEnd : IBackendInterface
     {
         // Every minute the agent checks if a device client process finished running
-        System.Timers.Timer _getProcessTimer = new System.Timers.Timer(new TimeSpan(0, 1, 0).TotalMilliseconds);
+        System.Timers.Timer _getProcessTimer = new System.Timers.Timer(new TimeSpan(0, 2, 0).TotalMilliseconds);
 
         /// <summary>
         /// Create agent base directory and send connect command to test center
@@ -82,7 +82,7 @@ namespace Console
                             }); 
                         } 
                     }
-                    Thread.Sleep((int)new TimeSpan(0, 3, 0).TotalMilliseconds);
+                    Thread.Sleep((int)new TimeSpan(0, 5, 0).TotalMilliseconds);
 
                     string cwd = Directory.GetCurrentDirectory();
                     Utils.WriteLog($"Send agentReady to test center in {Settings.Get("TEST_CENTER_URL")}", "info");
@@ -99,13 +99,13 @@ namespace Console
             }
             );
             
-            if (t1.Wait(new TimeSpan(0, 4, 0)))
+            if (t1.Wait(new TimeSpan(0, 5, 0)))
             {
-                Utils.WriteLog("----task finished with in 4 min-----", "info");
+                Utils.WriteLog("----task finished with in 10 min-----", "info");
             }
             else
             {
-                Utils.WriteLog("-----task didn't finished with in 4 min-----", "info");
+                Utils.WriteLog("-----task didn't finished with in 10 min-----", "info");
             }          
         }
     
@@ -134,7 +134,7 @@ namespace Console
         public bool SendScript(string jsonContent)
         {
             Task t1 = Task.Factory.StartNew(() =>
-            {
+                {
                 Utils.LoadConfig();
                 try
                 {
@@ -149,9 +149,14 @@ namespace Console
                         {
                             Device device = devicesToCreate[deviceIndex];
                             string deviceName = device.DeviceSerialNumber + "_" + device.DeviceType;
-                            Utils.RunCommand(Settings.Get("PYTHON"), "start_device.py", $"{Settings.Get("CONFIG_FILE")} {deviceName} {deviceIndex}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
+                            var index = deviceIndex;
+                            Task t = Task.Factory.StartNew(() =>
+                            {
+                                Utils.RunCommand(Settings.Get("PYTHON"), "start_device.py", $"{Settings.Get("CONFIG_FILE")} {deviceName} {index}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
+                            });
                         }
                     }
+                    Thread.Sleep((int)new TimeSpan(0, 5, 0).TotalMilliseconds);
                 }
                 catch (Exception ex)
                 {
@@ -162,16 +167,16 @@ namespace Console
                     Utils.WriteLog($"-----AGENT RUNINNG DEVICES STAGE END-----", "info");
                 }
             });
-            if (t1.Wait(new TimeSpan(0, 2, 0)))
+            if (t1.Wait(new TimeSpan(0, 5, 0)))
             {
-                Utils.WriteLog("----task finished with in 2 min-----", "info");
+                Utils.WriteLog("----task finished with in 10 min-----", "info");
                 ReadDeviceProcesses();
                 _getProcessTimer.Elapsed += GetProcessTimer_Elapsed;
                 _getProcessTimer.Start();
             }
             else
             {
-                Utils.WriteLog("-----task didn't finished with in 2 min-----", "info");
+                Utils.WriteLog("-----task didn't finished with in 10 min-----", "info");
             }
             return true;
         }  
