@@ -15,6 +15,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 
+
 namespace Console.Utilities
 {
     public static class Utils
@@ -39,26 +40,27 @@ namespace Console.Utilities
             start.RedirectStandardOutput = true;
             start.RedirectStandardError = true;
 
-            int returnCode = 0;
-            using (Process process = Process.Start(start))
+            int exit = 0;
+
+            using (var process = new Process
             {
+                StartInfo = start
+            })
+            {
+                process.Start();
+                var result = Task.Run(() => process.StandardOutput.ReadToEnd());
+                var error = Task.Run(() => process.StandardError.ReadToEnd());
+
                 process.WaitForExit();
-                using (StreamReader reader = process.StandardOutput)
-                {
-                    string output = reader.ReadToEnd();
-                    if (outputFile != null)
-                    {
-                        WriteToFile(outputFile, output, append: true);
-                    }
-                }
-                using (StreamReader reader = process.StandardError)
-                {
-                    string output = reader.ReadToEnd();
-                    WriteToFile(outputFile, output, append: true);
-                }
-                returnCode = process.ExitCode;
+
+                WriteToFile(outputFile, result.Result, append: true);
+                WriteToFile(outputFile, error.Result, append: true);
+
+                exit = process.ExitCode;
+                
             }
-            return returnCode;
+
+            return exit;
         }
 
         /// <summary>
@@ -69,7 +71,7 @@ namespace Console.Utilities
         /// <param name="args">arguments</param>
         /// <param name="outputFile">Output file path</param>
         /// <returns>Command return code</returns>
-        public static async Task RunCommandAsync(string exeFile, string cmd, string args, string cwd, string outputFile)
+        public static async Task<int> RunCommandAsync(string exeFile, string cmd, string args, string cwd, string outputFile)
         {
             ProcessStartInfo start = new ProcessStartInfo();
             start.FileName = exeFile;
@@ -79,27 +81,54 @@ namespace Console.Utilities
             start.RedirectStandardOutput = true;
             start.RedirectStandardError = true;
 
-            int returnCode = 0;
-            using (Process process = Process.Start(start))
-            {
-                await Task.Run(() => process.WaitForExit());
-                using (StreamReader reader = process.StandardOutput)
-                {
-                    string output = reader.ReadToEnd();
-                    if (outputFile != null)
-                    {
-                        WriteToFile(outputFile, output, append: true);
-                    }
-                }
-                using (StreamReader reader = process.StandardError)
-                {
-                    string output = reader.ReadToEnd();
-                    WriteToFile(outputFile, output, append: true);
-                }
-                returnCode = process.ExitCode;
-            }          
-            
+            var result = await ProcessAsyncHelper.RunAsync(start);
+
+            WriteToFile(outputFile, result.StdOut, append: true);
+            WriteToFile(outputFile, result.StdErr, append: true);
+
+            return result.ExitCode.HasValue ? result.ExitCode.Value : 1;
+
         }
+
+        ///// <summary>
+        ///// Run Windows command in background asynchronically
+        ///// </summary>
+        ///// <param name="exeFile">Executable file</param>
+        ///// <param name="cmd">command</param>
+        ///// <param name="args">arguments</param>
+        ///// <param name="outputFile">Output file path</param>
+        ///// <returns>Command return code</returns>
+        //public static async Task RunCommandAsync(string exeFile, string cmd, string args, string cwd, string outputFile)
+        //{
+        //    ProcessStartInfo start = new ProcessStartInfo();
+        //    start.FileName = exeFile;
+        //    start.Arguments = string.Format("{0} {1}", cmd, args);
+        //    start.WorkingDirectory = cwd;
+        //    start.UseShellExecute = false;
+        //    start.RedirectStandardOutput = true;
+        //    start.RedirectStandardError = true;
+
+        //    int returnCode = 0;
+        //    using (Process process = Process.Start(start))
+        //    {
+        //        await Task.Run(() => process.WaitForExit());
+        //        using (StreamReader reader = process.StandardOutput)
+        //        {
+        //            string output = reader.ReadToEnd();
+        //            if (outputFile != null)
+        //            {
+        //                WriteToFile(outputFile, output, append: true);
+        //            }
+        //        }
+        //        using (StreamReader reader = process.StandardError)
+        //        {
+        //            string output = reader.ReadToEnd();
+        //            WriteToFile(outputFile, output, append: true);
+        //        }
+        //        returnCode = process.ExitCode;
+        //    }          
+
+        //}
 
         /// <summary>
         /// Terminates process and all its children by pid

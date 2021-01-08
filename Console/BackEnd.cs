@@ -18,7 +18,7 @@ namespace Console
     public class BackEnd : IBackendInterface
     {
         // Every minute the agent checks if a device client process finished running
-        System.Timers.Timer _getProcessTimer = new System.Timers.Timer(new TimeSpan(0, 2, 0).TotalMilliseconds);
+        System.Timers.Timer _getProcessTimer = new System.Timers.Timer(new TimeSpan(0, 1, 0).TotalMilliseconds);
 
         /// <summary>
         /// Create agent base directory and send connect command to test center
@@ -82,7 +82,7 @@ namespace Console
                             }); 
                         } 
                     }
-                    Thread.Sleep((int)new TimeSpan(0, 5, 0).TotalMilliseconds);
+                    Thread.Sleep((int)new TimeSpan(0, 1, 0).TotalMilliseconds);
 
                     string cwd = Directory.GetCurrentDirectory();
                     Utils.WriteLog($"Send agentReady to test center in {Settings.Get("TEST_CENTER_URL")}", "info");
@@ -99,7 +99,7 @@ namespace Console
             }
             );
             
-            if (t1.Wait(new TimeSpan(0, 5, 0)))
+            if (t1.Wait(new TimeSpan(0, 3, 0)))
             {
                 Utils.WriteLog("----task finished with in 10 min-----", "info");
             }
@@ -156,7 +156,7 @@ namespace Console
                             });
                         }
                     }
-                    Thread.Sleep((int)new TimeSpan(0, 5, 0).TotalMilliseconds);
+                    Thread.Sleep((int)new TimeSpan(0, 2, 0).TotalMilliseconds);
                 }
                 catch (Exception ex)
                 {
