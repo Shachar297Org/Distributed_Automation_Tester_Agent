@@ -116,6 +116,7 @@
     <Content Include="Python\compare.py" />
     <Content Include="Python\compare_events.py" />
     <Content Include="Python\create_device_env.py" />
+    <Content Include="Python\create_device_folder.py" />
     <Content Include="Python\create_device_folders.py" />
     <Content Include="Python\logger.py" />
     <Content Include="Python\record.py" />
