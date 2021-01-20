@@ -9,6 +9,6 @@ namespace Shared
 
         Task SendDevices(string jsonContent);
 
-        bool SendScript(string jsonContent);
+        Task<bool> SendScript(string jsonContent);
     }
 }

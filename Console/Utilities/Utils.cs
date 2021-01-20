@@ -22,21 +22,15 @@ namespace Console.Utilities
     {
         private static ReaderWriterLockSlim _readWriteLock = new ReaderWriterLockSlim();
 
-        /// <summary>
-        /// Run Windows command in background and wait until it finishes
-        /// </summary>
-        /// <param name="exeFile">Executable file</param>
-        /// <param name="cmd">command</param>
-        /// <param name="args">arguments</param>
-        /// <param name="outputFile">Output file path</param>
-        /// <returns>Command return code</returns>
-        public static int RunCommand(string exeFile, string cmd, string args, string cwd, string outputFile)
+
+
+        public static int RunCommand(string exeFile, string cmd, string args, string cwd, string outputFile, bool useShell = false)
         {
             ProcessStartInfo start = new ProcessStartInfo();
             start.FileName = exeFile;
             start.Arguments = string.Format("{0} {1}", cmd, args);
             start.WorkingDirectory = cwd;
-            start.UseShellExecute = false;
+            start.UseShellExecute = useShell;
             start.RedirectStandardOutput = true;
             start.RedirectStandardError = true;
 
@@ -57,10 +51,60 @@ namespace Console.Utilities
                 WriteToFile(outputFile, error.Result, append: true);
 
                 exit = process.ExitCode;
-                
+
             }
 
             return exit;
+        }
+        /// <summary>
+        /// Run Windows command in background and wait until it finishes
+        /// </summary>
+        /// <param name="exeFile">Executable file</param>
+        /// <param name="cmd">command</param>
+        /// <param name="args">arguments</param>
+        /// <param name="outputFile">Output file path</param>
+        /// <returns>Command return code</returns>
+        public static int RunCommandNew(string exeFile, string cmd, string args, string cwd, string outputFile)
+        {
+            try
+            {
+                ProcessStartInfo start = new ProcessStartInfo();
+                start.FileName = exeFile;
+                start.Arguments = string.Format("{0} {1}", cmd, args);
+                start.WorkingDirectory = cwd;
+                start.UseShellExecute = true;
+                start.RedirectStandardOutput = false;
+                start.RedirectStandardError = false;
+
+                int exit = 0;
+
+                using (var process = new Process
+                {
+                    StartInfo = start
+                })
+                {
+                    process.Start();
+                    //var result = Task.Run(() => process.StandardOutput.ReadToEnd());
+                    //var error = Task.Run(() => process.StandardError.ReadToEnd());
+
+                    process.WaitForExit();
+
+                    //WriteToFile(outputFile, result.Result, append: true);
+                    //WriteToFile(outputFile, error.Result, append: true);
+
+                    exit = process.ExitCode;
+
+                }
+
+                return exit;
+            }
+            catch(Exception ex)
+            {
+                WriteToFile(outputFile, $"Error in run command: {ex.Message} {ex.StackTrace}", append: true);
+                throw;
+            }           
+
+            
         }
 
         /// <summary>
@@ -71,7 +115,7 @@ namespace Console.Utilities
         /// <param name="args">arguments</param>
         /// <param name="outputFile">Output file path</param>
         /// <returns>Command return code</returns>
-        public static async Task<int> RunCommandAsync(string exeFile, string cmd, string args, string cwd, string outputFile)
+        public static async Task RunCommandAsync(string exeFile, string cmd, string args, string cwd, string outputFile)
         {
             ProcessStartInfo start = new ProcessStartInfo();
             start.FileName = exeFile;
@@ -85,9 +129,7 @@ namespace Console.Utilities
 
             WriteToFile(outputFile, result.StdOut, append: true);
             WriteToFile(outputFile, result.StdErr, append: true);
-
-            return result.ExitCode.HasValue ? result.ExitCode.Value : 1;
-
+           
         }
 
         ///// <summary>
@@ -256,7 +298,7 @@ namespace Console.Utilities
             {
                 using (StreamWriter writer = new StreamWriter(filePath, append))
                 {
-                    writer.Write(content);
+                    writer.WriteLine(content);
                 }
             }
             finally

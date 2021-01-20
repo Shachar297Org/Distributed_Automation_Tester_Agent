@@ -45,21 +45,30 @@ namespace LumXAgent.Controllers
 
         [HttpPost]
         [Route("sendDevices")]
-        public void SendDevices()
+        public async Task SendDevices()
         {
             HttpContent requestContent = Request.Content;
-            string content = requestContent.ReadAsStringAsync().Result;
-            backEnd.SendDevices(content);
+            string content = await requestContent.ReadAsStringAsync();
+            await backEnd.SendDevices(content);
         }
 
         [HttpPost]
         [Route("sendScript")]
-        public void SendScript()
+        public async Task SendScript()
         {
             HttpContent requestContent = Request.Content;
-            string scriptContent = requestContent.ReadAsStringAsync().Result;
+            string scriptContent = await requestContent.ReadAsStringAsync();
             backEnd.SendScript(scriptContent);
         }
+
+        [HttpGet]
+        [Route("startDevices")]
+        public async Task StartDevices()
+        {
+            string scriptContent = string.Empty;
+            backEnd.SendScript(scriptContent);
+        }
+
 
         [HttpGet]
         [Route("testcmd")]

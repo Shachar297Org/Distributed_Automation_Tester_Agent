@@ -58,7 +58,8 @@ def ConvertDatetimeFromAMPMTo24(datetimeStr: str, fromFormat: str):
         dt = dt.replace(hour=hour)
         return dt.strftime('%Y-%m-%d %H:%M:%S')
     else:
-        return datetimeStr
+        dt = datetime.datetime.strptime(datetimeStr, fromFormat)
+        return dt.strftime('%Y-%m-%d %H:%M:%S')
 
 
 def ReadEventEntriesFromExcelFile(excelFilePath: str, sheetName: str):
