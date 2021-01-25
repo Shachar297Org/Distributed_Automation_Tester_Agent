@@ -56,56 +56,6 @@ namespace Console.Utilities
 
             return exit;
         }
-        /// <summary>
-        /// Run Windows command in background and wait until it finishes
-        /// </summary>
-        /// <param name="exeFile">Executable file</param>
-        /// <param name="cmd">command</param>
-        /// <param name="args">arguments</param>
-        /// <param name="outputFile">Output file path</param>
-        /// <returns>Command return code</returns>
-        public static int RunCommandNew(string exeFile, string cmd, string args, string cwd, string outputFile)
-        {
-            try
-            {
-                ProcessStartInfo start = new ProcessStartInfo();
-                start.FileName = exeFile;
-                start.Arguments = string.Format("{0} {1}", cmd, args);
-                start.WorkingDirectory = cwd;
-                start.UseShellExecute = true;
-                start.RedirectStandardOutput = false;
-                start.RedirectStandardError = false;
-
-                int exit = 0;
-
-                using (var process = new Process
-                {
-                    StartInfo = start
-                })
-                {
-                    process.Start();
-                    //var result = Task.Run(() => process.StandardOutput.ReadToEnd());
-                    //var error = Task.Run(() => process.StandardError.ReadToEnd());
-
-                    process.WaitForExit();
-
-                    //WriteToFile(outputFile, result.Result, append: true);
-                    //WriteToFile(outputFile, error.Result, append: true);
-
-                    exit = process.ExitCode;
-
-                }
-
-                return exit;
-            }
-            catch(Exception ex)
-            {
-                WriteToFile(outputFile, $"Error in run command: {ex.Message} {ex.StackTrace}", append: true);
-                throw;
-            }           
-
-            
-        }
 
         /// <summary>
         /// Run Windows command in background asynchronically
@@ -131,46 +81,6 @@ namespace Console.Utilities
             WriteToFile(outputFile, result.StdErr, append: true);
            
         }
-
-        ///// <summary>
-        ///// Run Windows command in background asynchronically
-        ///// </summary>
-        ///// <param name="exeFile">Executable file</param>
-        ///// <param name="cmd">command</param>
-        ///// <param name="args">arguments</param>
-        ///// <param name="outputFile">Output file path</param>
-        ///// <returns>Command return code</returns>
-        //public static async Task RunCommandAsync(string exeFile, string cmd, string args, string cwd, string outputFile)
-        //{
-        //    ProcessStartInfo start = new ProcessStartInfo();
-        //    start.FileName = exeFile;
-        //    start.Arguments = string.Format("{0} {1}", cmd, args);
-        //    start.WorkingDirectory = cwd;
-        //    start.UseShellExecute = false;
-        //    start.RedirectStandardOutput = true;
-        //    start.RedirectStandardError = true;
-
-        //    int returnCode = 0;
-        //    using (Process process = Process.Start(start))
-        //    {
-        //        await Task.Run(() => process.WaitForExit());
-        //        using (StreamReader reader = process.StandardOutput)
-        //        {
-        //            string output = reader.ReadToEnd();
-        //            if (outputFile != null)
-        //            {
-        //                WriteToFile(outputFile, output, append: true);
-        //            }
-        //        }
-        //        using (StreamReader reader = process.StandardError)
-        //        {
-        //            string output = reader.ReadToEnd();
-        //            WriteToFile(outputFile, output, append: true);
-        //        }
-        //        returnCode = process.ExitCode;
-        //    }          
-
-        //}
 
         /// <summary>
         /// Terminates process and all its children by pid
@@ -355,11 +265,20 @@ namespace Console.Utilities
 
         public static void WriteLog(string msg, string level)
         {
-            using (StreamWriter writer = new StreamWriter(Settings.Get("LOG_FILE_PATH"), append: true))
+            _readWriteLock.EnterWriteLock();
+            try
             {
-                string nowTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-                writer.WriteLine($"{nowTime} [{level.ToUpper()}] : {msg}");
+                using (StreamWriter writer = new StreamWriter(Settings.Get("LOG_FILE_PATH"), append: true))
+                {
+                    string nowTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                    writer.WriteLine($"{nowTime} [{level.ToUpper()}] : {msg}");
+                }
             }
+            finally
+            {
+                _readWriteLock.ExitWriteLock();
+            }
+            
         }
 
     }

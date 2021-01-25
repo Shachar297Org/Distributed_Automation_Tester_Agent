@@ -19,13 +19,14 @@ namespace Console
     public class BackEnd : IBackendInterface
     {
         // Every minute the agent checks if a device client process finished running
-        System.Timers.Timer _getProcessTimer = new System.Timers.Timer(new TimeSpan(0, 2, 0).TotalMilliseconds);
+        private static System.Timers.Timer _getProcessTimer = new System.Timers.Timer(new TimeSpan(0, 1, 30).TotalMilliseconds);
 
         /// <summary>
         /// Create agent base directory and send connect command to test center
         /// </summary>
         public async Task<bool> Init()
         {
+            _getProcessTimer.AutoReset = false;
             Utils.LoadConfig();
             try
             {
@@ -79,17 +80,17 @@ namespace Console
                     foreach (Device device in devicesToCreate)
                     {
                         string deviceName = device.DeviceSerialNumber + "_" + device.DeviceType;
-                        Task t = Task.Run(() =>
-                        {
+                        //Task t = Task.Run(() =>
+                        //{
                             Utils.RunCommand(Settings.Get("PYTHON"), "create_device_folder.py",
                                 $"{Settings.Get("CONFIG_FILE")} {deviceName}",
                                 Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
-                        });
-                        createFolderTasks.Add(t);                      
+                        //});
+                        //createFolderTasks.Add(t);                      
                     } 
                 }
 
-                Task.WaitAll(createFolderTasks.ToArray());
+                //Task.WaitAll(createFolderTasks.ToArray());
                 sw.Stop();
 
                 Utils.WriteLog($"Creating folders finished in {sw.ElapsedMilliseconds / 1000} seconds", "info");
@@ -168,24 +169,26 @@ namespace Console
                         string deviceName = device.DeviceSerialNumber + "_" + device.DeviceType;
                         var index = deviceIndex;
 
-                        Task startDevice = Task.Run(() =>
-                        {
+                        //Task startDevice = Task.Run(() =>
+                        //{
                             Utils.RunCommand(Settings.Get("PYTHON"), "start_device.py",
                             $"{Settings.Get("CONFIG_FILE")} {deviceName} {index}",
                             Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
-                        });
+                        //});
 
-                        startDevicesTasks.Add(startDevice);
+                        //startDevicesTasks.Add(startDevice);
                     }
 
                 }
 
-                Task.WaitAll(startDevicesTasks.ToArray());
+                //Task.WaitAll(startDevicesTasks.ToArray());
 
                 sw.Stop();
 
                 Utils.WriteLog($"Starting devices finished in {sw.ElapsedMilliseconds/1000} seconds", "info");
                 ReadDeviceProcesses();
+
+                _getProcessTimer.AutoReset = false;
                 _getProcessTimer.Elapsed += GetProcessTimer_Elapsed;
                 _getProcessTimer.Start();
 
@@ -246,8 +249,6 @@ namespace Console
                 List<LumXProcess> processList = Utils.ReadProcessesFromFile(Settings.Get("PROCESSES_PATH"));
                 List<LumXProcess> processesToRemove = new List<LumXProcess>();
 
-                int count = 0;
-
                 foreach (var processObj in processList)
                 {
                     if (processObj.Type == "Client")
@@ -255,9 +256,6 @@ namespace Console
                         // If client process is NOT running
                         if (!Utils.IsProcessRunning(processObj.Pid))
                         {
-
-                            if (count > 40) break;
-
                             // Stop the relevant server
                             Utils.WriteLog($"Client process with PID {processObj.Pid} was terminated.", "info");
                             string ga = processObj.DeviceType;
@@ -277,7 +275,6 @@ namespace Console
                             // Send script results to test center
                             SendScriptResults(sn, ga);
 
-                            count++;
                         }
                     }
                 }
@@ -371,21 +368,28 @@ namespace Console
         /// <param name="e">event</param>
         private void GetProcessTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            _getProcessTimer.Stop();
-            // todo: check the use of interval method
-            Utils.WriteLog($"---Process timer stopped---", "info");
-            Utils.WriteLog($"Check device client finished.", "info");
-            // If there are still running devices
-            if (CheckDeviceClientFinished())
+            try
             {
-                Utils.WriteLog($"There are still running devices.", "info");
-                _getProcessTimer.Start();
-                Utils.WriteLog($"---Process timer started---", "info");
+                Utils.WriteLog($"---Process timer stopped---", "info");
+                Utils.WriteLog($"Check device client finished.", "info");
+                // If there are still running devices
+                if (CheckDeviceClientFinished())
+                {
+                    Utils.WriteLog($"There are still running devices.", "info");
+                    
+                    _getProcessTimer.Start();
+                    Utils.WriteLog($"---Process timer started---", "info");
+                }
+                else
+                {
+                    Utils.WriteLog($"There are no more running devices.", "info");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Utils.WriteLog($"There are no more running devices.", "info");
+                Utils.WriteLog($"Error: {ex.Message} {ex.StackTrace}", "error");
             }
+            
         }
     }
 }

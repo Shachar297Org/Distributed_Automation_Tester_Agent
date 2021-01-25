@@ -120,6 +120,7 @@
     <Content Include="Python\create_device_folders.py" />
     <Content Include="Python\logger.py" />
     <Content Include="Python\record.py" />
+    <Content Include="Python\send_client_log.py" />
     <Content Include="Python\sql.py" />
     <Content Include="Python\start_device.py" />
     <Content Include="Python\start_devices.py" />

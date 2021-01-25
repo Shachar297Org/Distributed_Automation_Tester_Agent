@@ -117,11 +117,11 @@ def CollectComparisonResults(config: object, sn: str, ga: str,
     return missingEvents
 
 
-def SendComparisonResults(tesCenterUrl: str, comparisonResults: list):
+def SendComparisonResults(tesCenterUrl: str, deviceName: str, comparisonResults: list):
     try:
         response = requests.post(
             url='{}/getComparisonResults'.format(tesCenterUrl),
-            json=comparisonResults)
+            json={'deviceName': deviceName, 'events': comparisonResults})
         if not response.ok:
             print('Error: request failed. status code: {}'.format(
                 response.status_code))
@@ -176,7 +176,7 @@ if __name__ == "__main__":
         WriteToCsvFile(comparisonResultsOfDeviceFile, comparisonResults)
 
         tesCenterUrl = config['TEST_CENTER_URL']
-        SendComparisonResults(tesCenterUrl, comparisonResults)
+        SendComparisonResults(tesCenterUrl, deviceName, comparisonResults)
 
         print('-----success-----')
 
