@@ -9,16 +9,19 @@ namespace Console.Models
     /// <summary>
     /// ScriptFile contains type (text/json/...) and content
     /// </summary>
-    public class ScriptFile
+    public class ScriptData
     {
-        public ScriptFile(string type, string content)
+        public ScriptData(string type, string content, int stoppingDelay)
         {
             Type = type;
             Content = content;
+            StoppingDelay = stoppingDelay;
         }
 
         public string Type { get; set; }
 
         public string Content { get; set; }
+
+        public int StoppingDelay { get; set; }
     }
 }

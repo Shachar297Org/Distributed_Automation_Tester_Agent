@@ -22,8 +22,6 @@ namespace Console.Utilities
     {
         private static ReaderWriterLockSlim _readWriteLock = new ReaderWriterLockSlim();
 
-
-
         public static int RunCommand(string exeFile, string cmd, string args, string cwd, string outputFile, bool useShell = false)
         {
             ProcessStartInfo start = new ProcessStartInfo();
@@ -80,6 +78,13 @@ namespace Console.Utilities
             WriteToFile(outputFile, result.StdOut, append: true);
             WriteToFile(outputFile, result.StdErr, append: true);
            
+        }
+
+        public static async Task KillWithADelay(int pid, int delay)
+        {
+            await Task.Delay(delay);
+            KillProcessAndChildren(pid);
+            Utils.WriteLog($"Server process with PID {pid} was terminated.", "info");
         }
 
         /// <summary>

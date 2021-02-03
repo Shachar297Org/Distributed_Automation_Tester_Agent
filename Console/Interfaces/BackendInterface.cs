@@ -1,7 +1,8 @@
-﻿using System;
+﻿using Console.Models;
+using System;
 using System.Threading.Tasks;
 
-namespace Shared
+namespace Console.Interfaces
 {
     public interface IBackendInterface
     {

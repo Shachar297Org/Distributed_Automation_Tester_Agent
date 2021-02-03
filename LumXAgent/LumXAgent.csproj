@@ -260,12 +260,8 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Console\Console.csproj">
-      <Project>{FD683F01-E4F4-4F6B-8E4E-B422C9D8242A}</Project>
+      <Project>{fd683f01-e4f4-4f6b-8e4e-b422c9d8242a}</Project>
       <Name>Console</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Shared\Shared.csproj">
-      <Project>{55135B1E-B3B8-4F4B-A9B8-3E94CCBAD19E}</Project>
-      <Name>Shared</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup>

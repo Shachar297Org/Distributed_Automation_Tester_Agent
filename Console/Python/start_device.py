@@ -91,6 +91,7 @@ if __name__ == "__main__":
 
         print('Start device {}'.format(deviceName))
         serverProcess = StartServer(deviceName, deviceIndex, config)
+        #time.sleep(10)
         clientProcess = StartClient(deviceName, scriptFilePath, deviceIndex,
                                     config)
 

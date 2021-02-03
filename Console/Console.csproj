@@ -88,10 +88,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BackEnd.cs" />
+    <Compile Include="Interfaces\BackendInterface.cs" />
     <Compile Include="Models\Device.cs" />
     <Compile Include="Models\Event.cs" />
     <Compile Include="Models\LumXProcess.cs" />
-    <Compile Include="Models\ScriptFile.cs" />
+    <Compile Include="Models\ScriptData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\Logger.cs" />
     <Compile Include="Utilities\ProcessAsyncHelper.cs" />
@@ -101,12 +102,6 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Shared\Shared.csproj">
-      <Project>{55135B1E-B3B8-4F4B-A9B8-3E94CCBAD19E}</Project>
-      <Name>Shared</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

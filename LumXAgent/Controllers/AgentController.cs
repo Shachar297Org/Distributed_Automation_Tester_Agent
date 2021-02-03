@@ -1,6 +1,5 @@
 ﻿using Console;
 using Console.Utilities;
-using Shared;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,6 +10,8 @@ using System.Web.Http;
 using System.Text;
 using System.Web.Http.Results;
 using System.Threading.Tasks;
+using Console.Models;
+using Console.Interfaces;
 
 namespace LumXAgent.Controllers
 {
@@ -54,21 +55,10 @@ namespace LumXAgent.Controllers
 
         [HttpPost]
         [Route("sendScript")]
-        public async Task SendScript()
+        public async Task SendScript([FromBody] ScriptData scriptData)
         {
-            HttpContent requestContent = Request.Content;
-            string scriptContent = await requestContent.ReadAsStringAsync();
-            backEnd.SendScript(scriptContent);
+            await backEnd.SendScript(scriptData);
         }
-
-        [HttpGet]
-        [Route("startDevices")]
-        public async Task StartDevices()
-        {
-            string scriptContent = string.Empty;
-            backEnd.SendScript(scriptContent);
-        }
-
 
         [HttpGet]
         [Route("testcmd")]
