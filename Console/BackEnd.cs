@@ -19,7 +19,7 @@ namespace Console
     public class BackEnd : IBackendInterface
     {
         // Every minute the agent checks if a device client process finished running
-        private static System.Timers.Timer _getProcessTimer = new System.Timers.Timer(new TimeSpan(0, 3, 0).TotalMilliseconds);
+        private static System.Timers.Timer _getProcessTimer = new System.Timers.Timer(new TimeSpan(0, 5, 0).TotalMilliseconds);
 
         private static int _stoppingDelay = 0;
         private static int _keepAliveCount = 0;
@@ -326,6 +326,20 @@ namespace Console
             }
         }
 
+        private bool IsQueueEmpty(LumXProcess process)
+        {
+            var file = Settings.Get("EMPTY_QUEUE_FILE");
+            var devices_folder = Settings.Get("DEVICE_FOLDERS_DIR");
+            var server_folder = process.DeviceSerialNumber.ToUpper() + "_" + process.DeviceType.ToUpper();
+
+            var date = DateTime.UtcNow;
+            var log_path = @"\Logs\LumX\Working\" + date.Year + "_" + date.Month + "_" + date.Day + @"\LumXServerHost\";
+
+            var empty_queue_filepath = Path.Combine(devices_folder, server_folder, log_path, file);
+
+            return File.Exists(empty_queue_filepath);
+        }
+
         /// <summary>
         /// Stop all device clients and servers processes and compare events
         /// </summary>
@@ -352,7 +366,7 @@ namespace Console
                     List<LumXProcess> processList = Utils.ReadProcessesFromFile(Settings.Get("PROCESSES_PATH"));
                     var running = processList.Where(p => Utils.IsProcessRunning(p.Pid)).ToList();
 
-                    var notRunning = processList.Where(p => !running.Contains(p)).ToList();
+                    var notRunning = processList.Where(p => !running.Contains(p) && IsQueueEmpty(p)).ToList();
                     var clientsNotRunning = notRunning.Where(p => p.Type == "Client").ToList();
 
                     if (clientsNotRunning.Count > 0)
