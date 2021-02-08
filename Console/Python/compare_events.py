@@ -117,11 +117,48 @@ def CollectComparisonResults(config: object, sn: str, ga: str,
     return missingEvents
 
 
-def SendComparisonResults(tesCenterUrl: str, deviceName: str, comparisonResults: list):
+def CollectLogRecords(config: object, sn: str, ga: str,
+                             devicesFoldersDir: str):
+
+    deviceName = '_'.join([sn, ga])
+    print('Collecting events for {}'.format(deviceName))
+    deviceFoldersDir = config['DEVICE_FOLDERS_DIR']
+
+    clientFolderName = config['CLIENT_PATH'].split('/')[-1]
+    logsFolderPath = os.path.join(deviceFoldersDir, deviceName,
+                                  clientFolderName, 'Debug_x64', 'Logs',
+                                  '1.0.0.0')
+
+    logFilesContent = ""
+    logFileNames = os.listdir(logsFolderPath)
+    for logFileName in logFileNames:
+        logFilePath = os.path.join(logsFolderPath, logFileName)
+        if os.path.isdir(logFilePath):
+            continue
+        
+        #print('Load records from log file: {}'.format(logFilePath))
+        #columns = [
+        #    'deviceType', 'deviceSerialNumber', 'entryKey', 'entryValue',
+        #    'entryTimestamp'
+        #]
+
+        logFileContent = ReadFileContent(logFilePath)
+        
+        if len(logFilesContent) != 0:
+            logFilesContent += "\n"
+        logFilesContent += logFileContent 
+        
+        #logEntries = ReadLogFile(logFilePath, columns)
+        #events.extend(logEntries)
+
+    return logFilesContent
+
+
+def SendEvents(tesCenterUrl: str, deviceName: str, comparisonResults: list):
     try:
         response = requests.post(
-            url='{}/getComparisonResults'.format(tesCenterUrl),
-            json={'deviceName': deviceName, 'events': comparisonResults})
+            url='{}/sendEventsLog'.format(tesCenterUrl),
+            json={'deviceName': deviceName, 'eventsJson': comparisonResults})
         if not response.ok:
             print('Error: request failed. status code: {}'.format(
                 response.status_code))
@@ -167,16 +204,13 @@ if __name__ == "__main__":
         if not os.path.exists(comparisonResultsFolder):
             os.makedirs(comparisonResultsFolder)
 
-        comparisonResults = CollectComparisonResults(config, sn, ga,
-                                                     devicesFoldersDir)
+            
+        print('Collecting events for {}'.format(deviceName))
 
-        comparisonResultsOfDeviceFile = os.path.join(comparisonResultsFolder,
-                                                     deviceName + '.csv')
-
-        WriteToCsvFile(comparisonResultsOfDeviceFile, comparisonResults)
+        events =  CollectLogRecords(config, sn, ga, devicesFoldersDir)
 
         tesCenterUrl = config['TEST_CENTER_URL']
-        SendComparisonResults(tesCenterUrl, deviceName, comparisonResults)
+        SendEvents(tesCenterUrl, deviceName, events)
 
         print('-----success-----')
 

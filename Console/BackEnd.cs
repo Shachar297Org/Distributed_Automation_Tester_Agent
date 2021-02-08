@@ -291,7 +291,8 @@ namespace Console
             {
                 Utils.WriteLog($"Script ran successfully.", "info");
             }
-            Utils.WriteLog($"Compare events.", "info");
+
+            Utils.WriteLog($"Send log events.", "info");
             int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "compare_events.py", $"{Settings.Get("CONFIG_FILE")} {sn} {ga}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
 
             if (returnCode == 0)
@@ -337,7 +338,7 @@ namespace Console
 
             var empty_queue_filepath = Path.Combine(devices_folder, server_folder, log_path, file);
 
-            return File.Exists(empty_queue_filepath);
+            return true; // File.Exists(empty_queue_filepath);
         }
 
         /// <summary>
