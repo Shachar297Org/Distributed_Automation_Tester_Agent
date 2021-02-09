@@ -331,14 +331,11 @@ namespace Console
         {
             var file = Settings.Get("EMPTY_QUEUE_FILE");
             var devices_folder = Settings.Get("DEVICE_FOLDERS_DIR");
-            var server_folder = process.DeviceSerialNumber.ToUpper() + "_" + process.DeviceType.ToUpper();
+            var server_folder = process.DeviceSerialNumber.ToUpper() + "_" + process.DeviceType.ToUpper() + "\\Server\\Debug";
 
-            var date = DateTime.UtcNow;
-            var log_path = @"\Logs\LumX\Working\" + date.Year + "_" + date.Month + "_" + date.Day + @"\LumXServerHost\";
+            var empty_queue_filepath = Path.Combine(devices_folder, server_folder, file);
 
-            var empty_queue_filepath = Path.Combine(devices_folder, server_folder, log_path, file);
-
-            return true; // File.Exists(empty_queue_filepath);
+            return File.Exists(empty_queue_filepath);
         }
 
         /// <summary>
