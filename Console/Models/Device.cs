@@ -2,21 +2,21 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Main
+namespace Console.Models
 {
     public class Device
     {
-        public Device(string ga, string sn, bool isActivated)
+        public Device(string ga, string sn, bool finished)
         {
             DeviceType = ga;
             DeviceSerialNumber = sn;
-            IsActivated = isActivated;
+            Finished = finished;
         }
 
         public string DeviceType { get; set; }
 
         public string DeviceSerialNumber { get; set; }
 
-        public bool IsActivated { get; set; }
+        public bool Finished { get; set; }
     }
 }

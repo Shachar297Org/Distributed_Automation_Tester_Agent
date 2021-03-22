@@ -89,6 +89,7 @@
   <ItemGroup>
     <Compile Include="BackEnd.cs" />
     <Compile Include="Interfaces\IBackendInterface.cs" />
+    <Compile Include="Models\AgentSettings.cs" />
     <Compile Include="Models\Device.cs" />
     <Compile Include="Models\Event.cs" />
     <Compile Include="Models\LumXProcess.cs" />

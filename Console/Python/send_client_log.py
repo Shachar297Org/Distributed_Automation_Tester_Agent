@@ -1,7 +1,7 @@
-def SendLogFile(deviceName: str, logContent: str, testCenterUrl: str):
+def SendLogFile(port: str, deviceName: str, logContent: str, testCenterUrl: str):
     print('Send script log of {} to test center {}'.format(
         deviceName, testCenterUrl))
-    jsonObj = {'deviceName': deviceName, 'Content': logContent}
+    jsonObj = {'deviceName': deviceName, 'Content': logContent, 'Port': port}
     response = requests.post(url=testCenterUrl + "/getScriptLog",
                              headers={'Content-Type': 'application/json'},
                              data=json.dumps(jsonObj))
@@ -34,10 +34,11 @@ if __name__ == "__main__":
         config = LoadConfigText(configFile)
 
         testCenterUrl = config['TEST_CENTER_URL']
+        port = config['AGENT_PORT']
 
         logContent = ReadFileContent(logFile)
 
-        SendLogFile(deviceName, logContent, testCenterUrl)
+        SendLogFile(port, deviceName, logContent, testCenterUrl)
 
         print('-----success-----')
 

@@ -11,5 +11,8 @@ namespace Console.Interfaces
         Task SendDevices(string jsonContent);
 
         Task<bool> SendScript(ScriptData scriptData);
+        Task SetSettings(AgentSettings settings);
+        bool Stop();
+        AgentData GetAgentData();
     }
 }

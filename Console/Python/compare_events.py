@@ -154,11 +154,11 @@ def CollectLogRecords(config: object, sn: str, ga: str,
     return logFilesContent
 
 
-def SendEvents(tesCenterUrl: str, deviceName: str, comparisonResults: list):
+def SendEvents(tesCenterUrl: str, port: str, deviceName: str, comparisonResults: list):
     try:
         response = requests.post(
             url='{}/sendEventsLog'.format(tesCenterUrl),
-            json={'deviceName': deviceName, 'eventsJson': comparisonResults})
+            json={'port': port, 'deviceName': deviceName, 'eventsJson': comparisonResults})
         if not response.ok:
             print('Error: request failed. status code: {}'.format(
                 response.status_code))
@@ -210,7 +210,9 @@ if __name__ == "__main__":
         events =  CollectLogRecords(config, sn, ga, devicesFoldersDir)
 
         tesCenterUrl = config['TEST_CENTER_URL']
-        SendEvents(tesCenterUrl, deviceName, events)
+        port = config['AGENT_PORT']
+
+        SendEvents(tesCenterUrl, port, deviceName, events)
 
         print('-----success-----')
 

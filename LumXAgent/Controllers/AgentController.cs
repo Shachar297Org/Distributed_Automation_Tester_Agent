@@ -35,13 +35,41 @@ namespace LumXAgent.Controllers
             return Json("{About: LumenisX Agent, cwd: " + cwd + ", test_center: " + testCenterUrl + "}");
         }
 
+        // Get: agent settings
+        [HttpGet]
+        [Route("getAgentSettings")]
+        public JsonResult<AgentSettings> GetAgentSettings()
+        {
+            Utils.LoadConfig();
+            var agentSettings = new AgentSettings();
+            agentSettings.AgentDirPath = Settings.Get("AGENT_DIR_PATH");
+            
+            return Json(agentSettings);
+        }
+
         // Get: init
         [HttpGet]
         [Route("init")]
-        public async Task<JsonResult<string>> Init()
+        public async Task<IHttpActionResult> Init()
         {
             bool result = await backEnd.Init();
-            return Json("{Result: " + result + "}");
+            return Json(new { Result = result });
+        }
+
+        [HttpPost]
+        [Route("stop")]
+        public async Task<IHttpActionResult> Stop()
+        {
+            bool result = backEnd.Stop();
+            return Json(new { Result = result });
+        }
+
+        [HttpGet]
+        [Route("getAgentData")]
+        public IHttpActionResult GetAgentData()
+        {
+            AgentData result = backEnd.GetAgentData();
+            return Json(result);
         }
 
         [HttpPost]
@@ -58,6 +86,13 @@ namespace LumXAgent.Controllers
         public async Task SendScript([FromBody] ScriptData scriptData)
         {
             await backEnd.SendScript(scriptData);
+        }
+
+        [HttpPost]
+        [Route("setSettings")]
+        public async Task SetSettings([FromBody] AgentSettings settings)
+        {
+            await backEnd.SetSettings(settings);
         }
 
         [HttpGet]
