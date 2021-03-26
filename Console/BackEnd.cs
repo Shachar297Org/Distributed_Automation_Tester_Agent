@@ -450,12 +450,12 @@ namespace Console
                 List<LumXProcess> processList = Utils.ReadProcessesFromFile(Settings.Get("PROCESSES_PATH"));
                 var running = processList.Where(p => Utils.IsProcessRunning(p.Pid)).ToList();
 
-                foreach (var proc in running)
+                Parallel.ForEach(running, proc =>
                 {
                     var process = Process.GetProcessById(proc.Pid);
                     process.Kill();
-                }
-
+                });
+                
                 Devices.Clear();
                 _getProcessTimer.Stop();
                 Status = AgentStatus.INIT;
