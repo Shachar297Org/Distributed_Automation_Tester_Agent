@@ -17,11 +17,11 @@ namespace LumXAgent.Controllers
 {
     public class AgentController : ApiController
     {
-        IBackendInterface backEnd;
+        ILoadTester backEnd;
 
         public AgentController()
         {
-            backEnd = new BackEnd();
+            backEnd = new LoadTester();
         }
 
         // Get: index

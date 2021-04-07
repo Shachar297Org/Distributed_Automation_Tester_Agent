@@ -16,7 +16,7 @@ using System.Timers;
 
 namespace Console
 {
-    public class BackEnd : IBackendInterface
+    public class LoadTester : ILoadTester
     {
         // Every minute the agent checks if a device client process finished running
         private static System.Timers.Timer _getProcessTimer = new System.Timers.Timer(new TimeSpan(0, 5, 0).TotalMilliseconds);

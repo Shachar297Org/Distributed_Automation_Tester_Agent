@@ -87,8 +87,10 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BackEnd.cs" />
-    <Compile Include="Interfaces\IBackendInterface.cs" />
+    <Compile Include="FunctionalTester.cs" />
+    <Compile Include="Interfaces\IFunctionalTester.cs" />
+    <Compile Include="LoadTester.cs" />
+    <Compile Include="Interfaces\ILoadTester.cs" />
     <Compile Include="Models\AgentSettings.cs" />
     <Compile Include="Models\Device.cs" />
     <Compile Include="Models\Event.cs" />

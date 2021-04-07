@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Console.Interfaces
 {
-    public interface IBackendInterface
+    public interface ILoadTester
     {
         Task<bool> Init();
 
