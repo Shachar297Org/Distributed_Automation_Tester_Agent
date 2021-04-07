@@ -87,8 +87,11 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BackEnd.cs" />
-    <Compile Include="Interfaces\BackendInterface.cs" />
+    <Compile Include="FunctionalTester.cs" />
+    <Compile Include="Interfaces\IFunctionalTester.cs" />
+    <Compile Include="LoadTester.cs" />
+    <Compile Include="Interfaces\ILoadTester.cs" />
+    <Compile Include="Models\AgentSettings.cs" />
     <Compile Include="Models\Device.cs" />
     <Compile Include="Models\Event.cs" />
     <Compile Include="Models\LumXProcess.cs" />
@@ -109,6 +112,7 @@
     <Content Include="Python\agent_app.py" />
     <Content Include="Python\collect_script_results.py" />
     <Content Include="Python\compare.py" />
+    <Content Include="Python\send_event.py" />
     <Content Include="Python\compare_events.py" />
     <Content Include="Python\create_device_env.py" />
     <Content Include="Python\create_device_folder.py" />

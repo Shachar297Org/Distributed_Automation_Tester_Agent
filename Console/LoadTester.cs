@@ -16,13 +16,37 @@ using System.Timers;
 
 namespace Console
 {
-    public class BackEnd : IBackendInterface
+    public class LoadTester : ILoadTester
     {
         // Every minute the agent checks if a device client process finished running
         private static System.Timers.Timer _getProcessTimer = new System.Timers.Timer(new TimeSpan(0, 5, 0).TotalMilliseconds);
 
         private static int _stoppingDelay = 0;
         private static int _keepAliveCount = 0;
+
+        public static AgentStatus Status { get; set; }
+        public static List<Device> Devices { get; set; } = new List<Device>();
+
+        private void CleanUpFolderContent(string folderPath)
+        {
+
+            DirectoryInfo di = new DirectoryInfo(folderPath);
+
+            foreach (FileInfo file in di.EnumerateFiles())
+            {
+                file.Delete();
+            }
+            foreach (DirectoryInfo dir in di.EnumerateDirectories())
+            {
+                dir.Delete(true);
+            }
+        }
+
+        private void PrepareAgent()
+        {
+            CleanUpFolderContent(Settings.Get("AGENT_DIR_PATH"));
+            CleanUpFolderContent(Settings.Get("DEVICE_FOLDERS_DIR"));
+        }
 
         /// <summary>
         /// Create agent base directory and send connect command to test center
@@ -32,8 +56,11 @@ namespace Console
             _getProcessTimer.AutoReset = false;
 
             Utils.LoadConfig();
+            PrepareAgent();
             try
             {
+                Status = AgentStatus.INIT;
+
                 Utils.WriteLog($"-----AGENT INIT BEGIN----", "info");
                 string internalIP = Utils.GetInternalIPAddress();
                 Utils.WriteLog($"Agent internal IP: {internalIP}", "info");
@@ -70,12 +97,16 @@ namespace Console
 
             Utils.LoadConfig();
 
+            Status = AgentStatus.CREATING_DEVICE_FOLDERS;
+
             Utils.WriteLog("-----AGENT DEVICE FOLDER CREATION STAGE BEGIN-----", "info");
             Utils.WriteLog("Received device list", "info");
             try
             {
                 Utils.WriteLog($"Json content: {jsonContent}", "info");
                 List<Device> devicesToCreate = JsonConvert.DeserializeObject<List<Device>>(jsonContent);
+                Devices = devicesToCreate;
+
                 Utils.WriteDeviceListToFile(devicesToCreate, Settings.Get("DEVICES_TO_CREATE_PATH"));
                 Utils.WriteLog("Start creating device folders", "info");
 
@@ -161,6 +192,8 @@ namespace Console
                 {
                     Utils.WriteToFile(Settings.Get("SCRIPT_PATH"), scriptFileObj.Content, false);
                 }
+
+                Status = AgentStatus.RUNNING;
 
                 Utils.WriteLog($"-----AGENT RUNINNG DEVICES STAGE BEGIN-----", "info");
                 List<Device> devicesToCreate = Utils.ReadDevicesFromFile(Settings.Get("DEVICES_TO_CREATE_PATH"));
@@ -283,7 +316,7 @@ namespace Console
             string logFile = Path.Combine(deviceClientLogFolder, "log.txt");
             Utils.WriteLog($"Client log file path: {logFile}", "info");
             string logContent = Utils.ReadFileContent(logFile);
-            if (logContent.Contains("fail"))
+            if (logContent.ToLower().Contains("fail"))
             {
                 SendClientLog(logFile, deviceName);
             }
@@ -291,7 +324,8 @@ namespace Console
             {
                 Utils.WriteLog($"Script ran successfully.", "info");
             }
-            Utils.WriteLog($"Compare events.", "info");
+
+            Utils.WriteLog($"Send log events.", "info");
             int returnCode = Utils.RunCommand(Settings.Get("PYTHON"), "compare_events.py", $"{Settings.Get("CONFIG_FILE")} {sn} {ga}", Settings.Get("PYTHON_SCRIPTS_PATH"), Settings.Get("OUTPUT"));
 
             if (returnCode == 0)
@@ -387,6 +421,7 @@ namespace Console
                     else
                     {
                         Utils.WriteLog($"There are no more running devices.", "info");
+                        Status = AgentStatus.FINISHED;
                     }
                 }
 
@@ -396,6 +431,74 @@ namespace Console
                 Utils.WriteLog($"Error: {ex.Message} {ex.StackTrace}", "error");
             }
 
+        }
+
+        public Task SetSettings(AgentSettings settings)
+        {
+            // TODO: write config file
+            throw new NotImplementedException();
+        }
+
+        public bool Stop()
+        {
+            Utils.LoadConfig();
+            bool result = false;
+
+            try
+            {
+                // If there are still running devices
+                List<LumXProcess> processList = Utils.ReadProcessesFromFile(Settings.Get("PROCESSES_PATH"));
+                var running = processList.Where(p => Utils.IsProcessRunning(p.Pid)).ToList();
+
+                Parallel.ForEach(running, proc =>
+                {
+                    var process = Process.GetProcessById(proc.Pid);
+                    process.Kill();
+                });
+                
+                Devices.Clear();
+                _getProcessTimer.Stop();
+                Status = AgentStatus.INIT;
+                _stoppingDelay = 0;
+                _keepAliveCount = 0;
+
+                result = true;
+
+            }
+            catch(Exception e)
+            {
+                Utils.WriteLog(e.Message, "error");
+                Utils.WriteLog(e.StackTrace, "error");
+            }
+
+            return result;
+        }
+
+        public AgentData GetAgentData()
+        {
+            Utils.LoadConfig();
+            var agentData = new AgentData();
+
+            try
+            {
+                // If there are still running devices
+                List<LumXProcess> processList = Utils.ReadProcessesFromFile(Settings.Get("PROCESSES_PATH"));
+                var running = processList.Where(p => Utils.IsProcessRunning(p.Pid)).ToList();
+
+                agentData.ClientsNumber = running.Where(d => d.Type == "Client").Count();
+                agentData.ServersNumber = running.Where(d => d.Type == "Server").Count();
+
+                agentData.Status = Status.ToString();
+                agentData.Devices = Devices;
+
+            }
+            catch(Exception e)
+            {
+                Utils.WriteLog(e.Message, "error");
+                Utils.WriteLog(e.StackTrace, "error");
+            }
+
+            return agentData;
         }
     }
 }
