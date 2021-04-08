@@ -1,0 +1,51 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Python\agent.py" />
+    <None Remove="Python\agent_app.py" />
+    <None Remove="Python\collect_script_results.py" />
+    <None Remove="Python\compare.py" />
+    <None Remove="Python\compare_events.py" />
+    <None Remove="Python\create_device_env.py" />
+    <None Remove="Python\create_device_folder.py" />
+    <None Remove="Python\create_device_folders.py" />
+    <None Remove="Python\logger.py" />
+    <None Remove="Python\record.py" />
+    <None Remove="Python\send_client_log.py" />
+    <None Remove="Python\send_event.py" />
+    <None Remove="Python\sql.py" />
+    <None Remove="Python\start_device.py" />
+    <None Remove="Python\start_devices.py" />
+    <None Remove="Python\utils.py" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Python\agent.py" />
+    <Content Include="Python\agent_app.py" />
+    <Content Include="Python\collect_script_results.py" />
+    <Content Include="Python\compare.py" />
+    <Content Include="Python\compare_events.py" />
+    <Content Include="Python\create_device_env.py" />
+    <Content Include="Python\create_device_folder.py" />
+    <Content Include="Python\create_device_folders.py" />
+    <Content Include="Python\logger.py" />
+    <Content Include="Python\record.py" />
+    <Content Include="Python\send_client_log.py" />
+    <Content Include="Python\send_event.py" />
+    <Content Include="Python\sql.py" />
+    <Content Include="Python\start_device.py" />
+    <Content Include="Python\start_devices.py" />
+    <Content Include="Python\utils.py" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Serilog" Version="2.10.0" />
+    <PackageReference Include="System.Management" Version="5.0.0" />
+  </ItemGroup>
+
+</Project>
