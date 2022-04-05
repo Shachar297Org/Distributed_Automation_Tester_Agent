@@ -19,7 +19,7 @@ namespace Console
     public class LoadTesterAgent : ILoadTesterAgent
     {
         // Every minute the agent checks if a device client process finished running
-        private static System.Timers.Timer _getProcessTimer = new System.Timers.Timer(new TimeSpan(0, 5, 0).TotalMilliseconds);
+        private static System.Timers.Timer _getProcessTimer = new System.Timers.Timer(new TimeSpan(0, 1, 0).TotalMilliseconds);
 
         private static int _stoppingDelay = 0;
         private static int _keepAliveCount = 0;
@@ -103,9 +103,7 @@ namespace Console
         {
             var sw = new Stopwatch();
 
-            List<Task> createFolderTasks = new List<Task>();
-
-            
+            List<Task> createFolderTasks = new List<Task>();            
 
             Status = AgentStatus.CREATING_DEVICE_FOLDERS;
 
