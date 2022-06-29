@@ -53,6 +53,54 @@ def StartClient(deviceName, scriptFilePath, deviceIndex, config):
         }
 
 
+def CreateScriptForDevice(deviceName, scriptFilePath, config):
+    """
+    Start client of a device
+    """
+    prefix = config['DEVICE_FOLDERS_DIR']
+    deviceFolder = os.path.join(prefix, deviceName)
+    parts = deviceName.split('_')
+    sn, ga = parts[0], parts[1]
+
+    filename = scriptFilePath.split('/')[-1]
+    print(filename)
+
+    # Opening JSON file
+    f = open(scriptFilePath)
+
+    data = json.load(f)
+
+    print("----------------------------------------------------------------------------")
+
+    print(data["Tests"][0]["Instructions"][0]["Parameters"][0]["SelectedValueString"])
+    print(data["Tests"][0]["Instructions"][1]["Parameters"][0]["SelectedValueString"])
+
+    data["Tests"][0]["Instructions"][0]["Parameters"][0]["SelectedValueString"] = ga
+    data["Tests"][0]["Instructions"][1]["Parameters"][0]["SelectedValueString"] = sn
+      
+    print(data["Tests"][0]["Instructions"][0]["Parameters"][0]["SelectedValueString"])
+    print(data["Tests"][0]["Instructions"][1]["Parameters"][0]["SelectedValueString"])
+
+    # Closing file
+    f.close()
+
+    # Serializing json 
+    json_object = json.dumps(data, indent = 4)
+    print(json_object)
+      
+    out_path = os.path.join(deviceFolder, filename)
+    print('Script path: {}'.format(out_path))
+
+    # Writing to sample.json
+    with open(out_path, "w") as outfile:
+        outfile.write(json_object)
+
+    return out_path
+
+    
+
+
+
 if __name__ == "__main__":
     from activate_env import *
     ActivateEnv()
@@ -89,10 +137,12 @@ if __name__ == "__main__":
         if not os.path.exists(processesDirPath):
             os.makedirs(processesDirPath)
 
+        out_path = CreateScriptForDevice(deviceName, scriptFilePath, config)
+
         print('Start device {}'.format(deviceName))
         serverProcess = StartServer(deviceName, deviceIndex, config)
         #time.sleep(10)
-        clientProcess = StartClient(deviceName, scriptFilePath, deviceIndex,
+        clientProcess = StartClient(deviceName, out_path, deviceIndex,
                                     config)
 
         print('Write server and client processes to json file')

@@ -31,7 +31,7 @@ namespace LumXAgentCore
         {
 
             services.AddControllers().AddNewtonsoftJson();
-                
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "LumXAgentCore", Version = "v1" });
@@ -49,7 +49,7 @@ namespace LumXAgentCore
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (env.IsDevelopment())
+            if (env.IsDevelopment() || env.IsProduction())
             {
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
